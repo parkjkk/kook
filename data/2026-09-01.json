@@ -1,3 +1,46 @@
 {
- "rows": []
+ "rows": [
+  {
+   "id": "ed986780-eb44-4af9-ae3c-1c751f26317d",
+   "worker": "고영우",
+   "hours": 10,
+   "product": "CT768E",
+   "plan": "",
+   "prod": 6,
+   "scrapKg": "",
+   "defQty": "",
+   "defPart": "",
+   "gasa": "○",
+   "cs": "○",
+   "gap": "○",
+   "inlet": "○",
+   "face": "○",
+   "bubble": "△",
+   "b1": "",
+   "b2": "",
+   "remark": "기포",
+   "ts": 1788246611267
+  },
+  {
+   "id": "c302e29e-bd37-4251-8d8e-231daaee4132",
+   "worker": "고영우",
+   "hours": 10,
+   "product": "CT767",
+   "plan": "",
+   "prod": 6,
+   "scrapKg": "",
+   "defQty": "",
+   "defPart": "",
+   "gasa": "○",
+   "cs": "○",
+   "gap": "○",
+   "inlet": "○",
+   "face": "○",
+   "bubble": "△",
+   "b1": "",
+   "b2": "",
+   "remark": "기포",
+   "ts": 1788246611268
+  }
+ ]
 }
