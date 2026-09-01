@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#B45309">
+<title>조형 생산 일보</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- 앱 토큰 ---------- */
+:root{
+  --bg:#F6F4F0; --surface:#FFFFFF; --surface2:#EFECE6; --line:#DCD7CC;
+  --ink:#28241E; --ink-dim:#6B655B; --ink-faint:#9A917F;
+  --accent:#B45309; --accent-soft:#F4E3D3; --accent-ink:#8A4306;
+  --good:#2F7A55; --good-soft:#DDEBE2; --warn:#8A5A10; --warn-soft:#F1E4C8;
+  --bad:#A93A3A; --bad-soft:#F0DCDC; --chip:#F1EDE5; --shadow:0 2px 10px rgba(40,36,30,.10);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#181510; --surface:#221E17; --surface2:#2B261E; --line:#3C362B;
+    --ink:#EDE7DB; --ink-dim:#B0A796; --ink-faint:#7E7666;
+    --accent:#E09353; --accent-soft:#3B2C1D; --accent-ink:#F0B27F;
+    --good:#6FB08C; --good-soft:#22352B; --warn:#D2A75C; --warn-soft:#37301E;
+    --bad:#CE7B7B; --bad-soft:#3A2626; --chip:#2B261E; --shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#181510; --surface:#221E17; --surface2:#2B261E; --line:#3C362B;
+  --ink:#EDE7DB; --ink-dim:#B0A796; --ink-faint:#7E7666;
+  --accent:#E09353; --accent-soft:#3B2C1D; --accent-ink:#F0B27F;
+  --good:#6FB08C; --good-soft:#22352B; --warn:#D2A75C; --warn-soft:#37301E;
+  --bad:#CE7B7B; --bad-soft:#3A2626; --chip:#2B261E; --shadow:0 2px 10px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Noto Sans KR','Malgun Gothic','맑은 고딕',sans-serif;
+  font-size:15px; line-height:1.45;
+}
+button{font-family:inherit; color:inherit; background:none; border:none; cursor:pointer}
+input,select,textarea{font-family:inherit; font-size:16px; color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+
+/* ---------- 상단바 ---------- */
+#topbar{
+  position:sticky; top:0; z-index:30; background:var(--surface);
+  border-bottom:1px solid var(--line); padding:8px 12px calc(8px);
+}
+.tb-row1{display:flex; align-items:center; gap:8px}
+.tb-title{font-weight:700; font-size:16px; letter-spacing:.02em}
+.tb-mode{
+  font-size:11px; padding:2px 8px; border-radius:99px; margin-left:auto;
+  background:var(--surface2); color:var(--ink-dim); border:1px solid var(--line);
+  display:flex; align-items:center; gap:5px; white-space:nowrap;
+}
+.tb-mode .dot{width:7px; height:7px; border-radius:99px; background:var(--ink-faint)}
+.tb-mode.on .dot{background:var(--good)}
+.tb-gear{font-size:19px; padding:4px 6px; border-radius:8px; color:var(--ink-dim)}
+.tb-gear:active{background:var(--surface2)}
+.tb-date{display:flex; align-items:center; justify-content:center; gap:4px; margin-top:6px}
+.tb-date button.nav{
+  width:42px; height:38px; border-radius:10px; font-size:16px;
+  background:var(--surface2); color:var(--ink-dim);
+}
+#dateBtn{
+  height:38px; padding:0 14px; border-radius:10px; font-size:16px; font-weight:700;
+  background:var(--accent-soft); color:var(--accent-ink); position:relative;
+}
+#dateBtn input{position:absolute; inset:0; opacity:0; width:100%; height:100%}
+#todayBtn{height:38px; padding:0 10px; border-radius:10px; font-size:13px; background:var(--surface2); color:var(--ink-dim)}
+
+/* ---------- 탭바 ---------- */
+#tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  display:flex; background:var(--surface); border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+#tabbar button{
+  flex:1; padding:9px 0 7px; font-size:12px; color:var(--ink-dim);
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+}
+#tabbar button .ti{font-size:19px; line-height:1}
+#tabbar button.active{color:var(--accent); font-weight:700}
+
+main{max-width:680px; margin:0 auto; padding:12px 12px 130px}
+main.wide{max-width:none}
+
+/* ---------- 입력 화면 ---------- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:10px; box-shadow:var(--shadow)}
+.card h3{margin:0 0 8px; font-size:13px; color:var(--ink-dim); font-weight:500}
+.chips{display:flex; flex-wrap:wrap; gap:7px}
+.chip{
+  padding:8px 14px; border-radius:99px; background:var(--chip); border:1px solid var(--line);
+  font-size:15px; color:var(--ink);
+}
+.chip.sel{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700}
+.empty-note{color:var(--ink-faint); font-size:13px; text-align:center; padding:26px 0}
+.wgroup{margin-bottom:12px}
+.wgroup .whead{
+  display:flex; align-items:baseline; gap:8px; padding:2px 4px 6px;
+}
+.wgroup .whead .wname{font-weight:700; font-size:16px}
+.wgroup .whead .whr{color:var(--ink-dim); font-size:13px}
+.rowcard{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:10px 12px; margin-bottom:7px; box-shadow:var(--shadow);
+  display:flex; align-items:center; gap:10px;
+}
+.rowcard .rc-main{flex:1; min-width:0}
+.rowcard .rc-prod{font-weight:700; font-size:16px}
+.rowcard .rc-sub{font-size:12.5px; color:var(--ink-dim); margin-top:2px; display:flex; flex-wrap:wrap; gap:4px 10px}
+.rowcard .rc-marks{font-size:12px; letter-spacing:2px; white-space:nowrap}
+.rowcard .rc-marks .mB{color:var(--bad); font-weight:700}
+.rowcard .rc-marks .mW{color:var(--warn); font-weight:700}
+.badge{display:inline-block; padding:1px 7px; border-radius:99px; font-size:11.5px}
+.badge.bad{background:var(--bad-soft); color:var(--bad)}
+.badge.plan{background:var(--good-soft); color:var(--good)}
+#addBtn{
+  position:fixed; right:14px; bottom:calc(64px + env(safe-area-inset-bottom)); z-index:29;
+  height:54px; padding:0 22px; border-radius:99px; background:var(--accent); color:#fff;
+  font-size:17px; font-weight:700; box-shadow:0 4px 14px rgba(0,0,0,.25);
+  display:flex; align-items:center; gap:6px;
+}
+.daysum{display:flex; gap:8px; margin-bottom:10px}
+.daysum .ds{
+  flex:1; background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:8px 4px; text-align:center;
+}
+.daysum .ds b{display:block; font-size:19px; font-variant-numeric:tabular-nums}
+.daysum .ds span{font-size:11.5px; color:var(--ink-dim)}
+
+/* ---------- 입력 시트(오버레이) ---------- */
+.overlay{
+  position:fixed; inset:0; z-index:40; background:var(--bg); display:none;
+  overflow-y:auto; overscroll-behavior:contain;
+}
+.overlay.open{display:block}
+.ov-head{
+  position:sticky; top:0; z-index:5; background:var(--surface); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:6px; padding:10px 12px;
+}
+.ov-head b{font-size:16px}
+.ov-head .x{margin-left:auto; font-size:22px; padding:2px 10px; color:var(--ink-dim)}
+.ov-body{max-width:680px; margin:0 auto; padding:12px 12px 120px}
+.f-label{font-size:13px; color:var(--ink-dim); margin:14px 2px 6px; display:flex; align-items:baseline; gap:8px}
+.f-label:first-child{margin-top:0}
+.f-label .hint{font-size:11.5px; color:var(--ink-faint)}
+.f-label .req{color:var(--bad)}
+input.f-input, .f-row input{
+  width:100%; padding:12px; border-radius:11px; border:1.5px solid var(--line);
+  background:var(--surface); font-size:17px;
+}
+.f-row{display:flex; gap:8px}
+.f-row > *{flex:1}
+.stepper{display:flex; align-items:stretch; gap:6px}
+.stepper button{
+  width:52px; border-radius:11px; background:var(--surface2); border:1.5px solid var(--line);
+  font-size:22px; color:var(--ink-dim);
+}
+.stepper input{flex:1; text-align:center; font-weight:700; font-size:19px; background:var(--surface); border:1.5px solid var(--line); border-radius:11px; min-width:0}
+.qzero{white-space:nowrap; padding:0 14px; border-radius:11px; border:1.5px solid var(--line); background:var(--surface2); font-size:14px; color:var(--ink-dim)}
+.qzero.sel{background:var(--good-soft); border-color:var(--good); color:var(--good); font-weight:700}
+details.defect{border:1.5px dashed var(--line); border-radius:12px; padding:10px 12px; margin-top:14px}
+details.defect summary{cursor:pointer; font-size:14.5px; color:var(--ink-dim); list-style:none; display:flex; align-items:center; gap:6px}
+details.defect summary::before{content:'▸'; transition:.15s}
+details.defect[open] summary::before{transform:rotate(90deg)}
+details.defect[open]{border-style:solid; border-color:var(--bad); background:var(--surface)}
+.chk-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.chk{
+  background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:8px 9px;
+}
+.chk.gasa{grid-column:1 / -1}
+.chk .ck-name{font-size:12.5px; color:var(--ink-dim); margin-bottom:5px}
+.seg{display:flex; gap:5px}
+.seg button{
+  flex:1; height:40px; border-radius:9px; background:var(--surface2); border:1.5px solid var(--line);
+  font-size:17px; color:var(--ink-faint);
+}
+.seg button.sel[data-v="○"]{background:var(--good-soft); border-color:var(--good); color:var(--good); font-weight:700}
+.seg button.sel[data-v="△"]{background:var(--warn-soft); border-color:var(--warn); color:var(--warn); font-weight:700}
+.seg button.sel[data-v="Ⅹ"]{background:var(--bad-soft); border-color:var(--bad); color:var(--bad); font-weight:700}
+.gasa-row{display:flex; gap:6px; align-items:stretch}
+.gasa-row input{width:0; flex:1; text-align:center; background:var(--surface); border:1.5px solid var(--line); border-radius:9px}
+.gasa-row button{width:44px; border-radius:9px; background:var(--surface2); border:1.5px solid var(--line); font-size:16px; color:var(--ink-dim)}
+.chk .ck-hint{font-size:10.5px; color:var(--ink-faint); font-weight:400}
+.bd-row{display:flex; gap:6px; align-items:stretch}
+.bd-row input{width:0; flex:1; height:40px; text-align:center; background:var(--surface); border:1.5px solid var(--line); border-radius:9px}
+.bd-row button{width:44px; border-radius:9px; background:var(--surface2); border:1.5px solid var(--line); font-size:15px; color:var(--ink-dim)}
+textarea.f-input{width:100%; padding:12px; border-radius:11px; border:1.5px solid var(--line); background:var(--surface); font-size:16px; min-height:64px; resize:vertical}
+textarea.f-input.need{border-color:var(--bad); background:var(--bad-soft)}
+.ov-actions{
+  position:fixed; left:0; right:0; bottom:0; z-index:6; background:var(--surface);
+  border-top:1px solid var(--line); padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  display:flex; gap:8px;
+}
+.ov-actions .save{
+  flex:1; height:52px; border-radius:13px; background:var(--accent); color:#fff;
+  font-size:18px; font-weight:700;
+}
+.ov-actions .del{width:92px; height:52px; border-radius:13px; background:var(--bad-soft); color:var(--bad); font-size:15px; font-weight:700}
+
+/* ---------- 일보(시트) 화면 ---------- */
+.sheet-toolbar{display:flex; gap:8px; margin-bottom:10px; align-items:center; max-width:680px; margin-left:auto; margin-right:auto}
+.sheet-toolbar .print{
+  flex:1; height:48px; border-radius:12px; background:var(--accent); color:#fff; font-size:16px; font-weight:700;
+}
+.sheet-toolbar .tool{height:48px; padding:0 14px; border-radius:12px; background:var(--surface); border:1px solid var(--line); color:var(--ink-dim); font-size:14px}
+.print-tip{font-size:12px; color:var(--ink-faint); text-align:center; margin:0 0 10px}
+.sheetwrap{overflow:auto; -webkit-overflow-scrolling:touch}
+.sheetzoom{transform-origin:top left}
+
+/* ---------- 현황 화면 ---------- */
+.mon-nav{display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px}
+.mon-nav b{font-size:17px}
+.mon-nav button{width:40px; height:36px; border-radius:10px; background:var(--surface2); color:var(--ink-dim); font-size:15px}
+table.mon{width:100%; border-collapse:collapse; background:var(--surface); border-radius:12px; overflow:hidden; border:1px solid var(--line)}
+table.mon th{font-size:12px; color:var(--ink-dim); font-weight:500; padding:8px 6px; border-bottom:1px solid var(--line); background:var(--surface2)}
+table.mon td{padding:9px 6px; text-align:center; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; font-size:14px}
+table.mon tr:last-child td{border-bottom:none}
+table.mon td.d{font-weight:700}
+table.mon tr.sun td.d{color:var(--bad)}
+table.mon tr.sat td.d{color:#3B6FA0}
+table.mon tfoot td{background:var(--surface2); font-weight:700}
+
+/* ---------- 설정 ---------- */
+.set-sec{margin-bottom:18px}
+.set-sec h4{margin:0 0 8px; font-size:14px}
+.set-sec .f-label{margin-top:10px}
+.set-note{font-size:12.5px; color:var(--ink-dim); background:var(--surface2); border-radius:10px; padding:10px 12px; line-height:1.6}
+.set-note ol{margin:6px 0 0; padding-left:18px}
+.btnrow{display:flex; gap:8px; margin-top:12px}
+.btn{height:46px; padding:0 16px; border-radius:11px; font-size:15px; font-weight:700}
+.btn.pri{background:var(--accent); color:#fff; flex:1}
+.btn.sec{background:var(--surface2); color:var(--ink-dim); border:1px solid var(--line)}
+#ghTestOut{font-size:13px; margin-top:8px; white-space:pre-wrap}
+#ghTestOut.ok{color:var(--good)} #ghTestOut.err{color:var(--bad)}
+
+/* ---------- 토스트 ---------- */
+#toast{
+  position:fixed; left:50%; bottom:calc(76px + env(safe-area-inset-bottom)); transform:translateX(-50%);
+  z-index:60; background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:99px;
+  font-size:14px; opacity:0; transition:opacity .25s; pointer-events:none; max-width:88vw; text-align:center;
+}
+#toast.show{opacity:.95}
+
+/* ================= 인쇄 시트 (원본 수기일보 재현) ================= */
+.sheet{
+  --hair:0.18mm; --thin:0.26mm; --med:0.5mm; --peach:#FDEADA;
+  width:287mm; background:#FFFFFF; color:#000000; position:relative;
+  font-family:'Malgun Gothic','맑은 고딕','Noto Sans KR',sans-serif;
+  padding:0 0 2mm; margin:0 auto 14px;
+  box-shadow:0 3px 14px rgba(0,0,0,.18);
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+.sh-spacer{height:3.1mm}
+.sh-titlerow{height:14.4mm; display:flex; align-items:center}
+.sh-title{
+  width:77.6%; text-align:center; font-size:17.6pt; font-weight:700; color:#000;
+  letter-spacing:.04em; line-height:1.1;
+}
+.sh-sign{position:absolute; top:2.6mm; right:0; border-collapse:collapse; table-layout:fixed}
+.sh-sign td{border:var(--thin) solid #000; width:19mm; text-align:center; padding:0; background:#fff}
+.sh-sign .lbl{height:4.6mm; font-size:7pt; line-height:1}
+.sh-sign .box{height:9.6mm}
+.sh-date{
+  height:7.2mm; display:flex; align-items:center; font-size:9.7pt; white-space:nowrap; color:#000;
+}
+.sh-date .dt{letter-spacing:.02em}
+.sh-date .note{color:#FF0000; font-size:7.9pt; margin-left:7mm}
+.sh-date .legend{font-weight:700; margin-left:6mm}
+table.sh{
+  width:100%; border-collapse:collapse; table-layout:fixed;
+  border:var(--med) solid #000;
+}
+table.sh th, table.sh td{
+  border:var(--hair) solid #000; overflow:hidden; text-align:center; vertical-align:middle;
+  padding:0 0.5mm; font-size:9.7pt; font-weight:400; line-height:1.12; color:#000;
+  word-break:keep-all;
+}
+table.sh thead th{background:var(--peach); border-width:var(--thin); padding:0}
+.hl{height:7.2mm; display:flex; align-items:center; justify-content:center}
+.hl.s10{font-size:8.8pt}
+.hl.s9{font-size:7.9pt}
+table.sh thead tr.h2 th{height:7.2mm; font-size:7.9pt; border-width:var(--med)}
+table.sh .bl-m{border-left-width:var(--med)}
+table.sh .br-m{border-right-width:var(--med)}
+table.sh thead tr.h1 th{border-bottom-width:var(--med)}
+table.sh tbody td{height:7.76mm}
+table.sh tbody tr:nth-child(4n+3) td, table.sh tbody tr:nth-child(4n+4) td{background:var(--peach)}
+table.sh td.rem{text-align:left; font-size:8pt; padding:0 1mm; line-height:1.05}
+table.sh td.num{font-variant-numeric:tabular-nums}
+
+/* ---------- 인쇄 ---------- */
+@media print{
+  @page{size:A4 landscape; margin:5mm}
+  body{background:#fff !important}
+  #topbar,#tabbar,#addBtn,.sheet-toolbar,.print-tip,.overlay,#toast{display:none !important}
+  main{display:none !important}
+  main#printhost{display:block !important; max-width:none; padding:0; margin:0}
+  #view-input,#view-month{display:none !important}
+  #view-sheet{display:block !important}
+  .sheetwrap{overflow:visible !important; height:auto !important}
+  .sheetzoom{transform:none !important; width:auto !important; height:auto !important}
+  .sheet{box-shadow:none; margin:0 auto; break-after:page}
+  .sheet:last-child{break-after:auto}
+}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="tb-row1">
+    <span class="tb-title">조형 생산 일보</span>
+    <span class="tb-mode" id="modeBadge"><span class="dot"></span><span id="modeTxt">이 기기 저장</span></span>
+    <button class="tb-gear" id="gearBtn" aria-label="설정">⚙︎</button>
+  </div>
+  <div class="tb-date">
+    <button class="nav" id="prevDay" aria-label="전날">◀</button>
+    <button id="dateBtn"><span id="dateLabel"></span><input type="date" id="dateInput" aria-label="날짜 선택"></button>
+    <button class="nav" id="nextDay" aria-label="다음날">▶</button>
+    <button id="todayBtn">오늘</button>
+  </div>
+</header>
+
+<main id="printhost">
+  <!-- 입력 -->
+  <section id="view-input">
+    <div class="daysum" id="daysum"></div>
+    <div class="card">
+      <h3>내 이름 (선택하면 추가할 때 자동 입력)</h3>
+      <div class="chips" id="meChips"></div>
+    </div>
+    <div id="rowList"></div>
+  </section>
+
+  <!-- 일보 (인쇄) -->
+  <section id="view-sheet" style="display:none">
+    <div class="sheet-toolbar">
+      <button class="print" id="printBtn">🖨 인쇄하기</button>
+      <button class="tool" id="zoomBtn">화면맞춤</button>
+      <button class="tool" id="reloadBtn">↻</button>
+    </div>
+    <p class="print-tip">인쇄 창에서 <b>가로 방향·배경 그래픽 켜기·머리글/바닥글 끄기</b>를 확인하세요. (A4 가로)</p>
+    <div class="sheetwrap" id="sheetwrap"><div class="sheetzoom" id="sheetzoom"></div></div>
+  </section>
+
+  <!-- 현황 -->
+  <section id="view-month" style="display:none">
+    <div class="mon-nav">
+      <button id="prevMon">◀</button><b id="monLabel"></b><button id="nextMon">▶</button>
+    </div>
+    <div id="monBody"></div>
+  </section>
+</main>
+
+<button id="addBtn">＋ 기록 추가</button>
+
+<nav id="tabbar">
+  <button data-tab="input" class="active"><span class="ti">✏️</span>입력</button>
+  <button data-tab="sheet"><span class="ti">📄</span>일보·인쇄</button>
+  <button data-tab="month"><span class="ti">📅</span>현황</button>
+</nav>
+
+<!-- 기록 추가/수정 -->
+<div class="overlay" id="entryOv">
+  <div class="ov-head"><b id="entryTitle">기록 추가</b><button class="x" id="entryClose">✕</button></div>
+  <div class="ov-body">
+    <div class="f-label">작업자 <span class="req">*</span></div>
+    <input class="f-input" id="fWorker" placeholder="이름" autocomplete="off">
+    <div class="chips" id="fWorkerChips" style="margin-top:7px"></div>
+
+    <div class="f-label">작업시간 (hr)</div>
+    <div class="stepper">
+      <button id="hrMinus">−</button>
+      <input id="fHours" inputmode="decimal" value="10">
+      <button id="hrPlus">＋</button>
+    </div>
+
+    <div class="f-label">제품명 <span class="req">*</span></div>
+    <input class="f-input" id="fProduct" placeholder="예: CC267B" autocomplete="off">
+    <div class="chips" id="fProductChips" style="margin-top:7px"></div>
+
+    <div class="f-label">계획수량 (조) <span class="hint">생산 시작일에만 기록 · 끝난 날은 0</span></div>
+    <div class="f-row">
+      <input class="f-input" id="fPlan" inputmode="numeric" placeholder="시작일에만 기록">
+      <button class="qzero" id="planZero">완료 (0)</button>
+    </div>
+
+    <div class="f-label">생산량 · 완성품 (조)</div>
+    <div class="stepper">
+      <button id="prodMinus">−</button>
+      <input id="fProd" inputmode="numeric" placeholder="0">
+      <button id="prodPlus">＋</button>
+    </div>
+
+    <details class="defect" id="defectBox">
+      <summary>불량 있음 (석고량·수량·부위)</summary>
+      <div class="f-label">불량석고량 (kg)</div>
+      <input class="f-input" id="fScrap" inputmode="decimal" placeholder="0">
+      <div class="f-label">불량수량 (개수)</div>
+      <input class="f-input" id="fDefQty" inputmode="numeric" placeholder="0">
+      <div class="f-label">불량부위</div>
+      <input class="f-input" id="fDefPart" placeholder="예: 상형1" autocomplete="off">
+      <div class="chips" id="fPartChips" style="margin-top:7px"></div>
+    </details>
+
+    <div class="f-label" style="margin-top:18px">검사 (기본 ○양호 · 눌러서 △보통 / Ⅹ불량)</div>
+    <div class="chk-grid">
+      <div class="chk gasa"><div class="ck-name">석고 가사시간</div>
+        <div class="gasa-row">
+          <input id="fGasa" value="○" autocomplete="off">
+          <button data-g="○">○</button><button data-g="△">△</button><button data-g="Ⅹ">Ⅹ</button>
+        </div>
+      </div>
+      <div class="chk"><div class="ck-name">CASE 상태</div><div class="seg" data-k="cs"></div></div>
+      <div class="chk"><div class="ck-name">몰드 틈새</div><div class="seg" data-k="gap"></div></div>
+      <div class="chk"><div class="ck-name">PVC몰드 주입구</div><div class="seg" data-k="inlet"></div></div>
+      <div class="chk"><div class="ck-name">몰드 제품면</div><div class="seg" data-k="face"></div></div>
+      <div class="chk"><div class="ck-name">몰드 기포</div><div class="seg" data-k="bubble"></div></div>
+      <div class="chk"><div class="ck-name">분동검사 1호 <span class="ck-hint">숫자 입력</span></div>
+        <div class="bd-row"><input id="fB1" inputmode="decimal" placeholder="예: 0.25%" autocomplete="off"><button type="button" data-bd="fB1">%</button></div>
+      </div>
+      <div class="chk"><div class="ck-name">분동검사 2호 <span class="ck-hint">숫자 입력</span></div>
+        <div class="bd-row"><input id="fB2" inputmode="decimal" placeholder="예: 0.25%" autocomplete="off"><button type="button" data-bd="fB2">%</button></div>
+      </div>
+    </div>
+
+    <div class="f-label">비고 <span class="hint" id="remHint">△·Ⅹ 체크 시 사유를 꼭 적어주세요</span></div>
+    <textarea class="f-input" id="fRemark" placeholder="사유 및 특이사항"></textarea>
+  </div>
+  <div class="ov-actions">
+    <button class="del" id="entryDel" style="display:none">삭제</button>
+    <button class="save" id="entrySave">저장</button>
+  </div>
+</div>
+
+<!-- 설정 -->
+<div class="overlay" id="setOv">
+  <div class="ov-head"><b>설정</b><button class="x" id="setClose">✕</button></div>
+  <div class="ov-body">
+    <div class="set-sec">
+      <h4>공유 저장 (GitHub 연결)</h4>
+      <div class="set-note">
+        모든 작업자의 입력을 한곳에 모으려면 GitHub 저장소를 연결하세요. 토큰은 <b>이 기기 브라우저에만</b> 저장됩니다.
+        <ol>
+          <li>github.com 로그인 → 데이터용 <b>비공개 저장소</b> 준비</li>
+          <li>Settings → Developer settings → <b>Fine-grained tokens</b> → Generate new token</li>
+          <li>Repository access: <b>Only select repositories</b> → 데이터 저장소만 선택</li>
+          <li>Permissions → Contents: <b>Read and write</b> → 생성된 토큰을 아래에 붙여넣기</li>
+        </ol>
+      </div>
+      <div class="f-label">소유자 (GitHub 아이디)</div>
+      <input class="f-input" id="ghOwner" autocomplete="off" autocapitalize="off">
+      <div class="f-label">데이터 저장소 이름</div>
+      <input class="f-input" id="ghRepo" autocomplete="off" autocapitalize="off" placeholder="예: ilbo-data">
+      <div class="f-label">브랜치</div>
+      <input class="f-input" id="ghBranch" value="main" autocomplete="off" autocapitalize="off">
+      <div class="f-label">토큰 (github_pat_…)</div>
+      <input class="f-input" id="ghToken" type="password" autocomplete="off">
+      <div class="btnrow">
+        <button class="btn sec" id="ghTest">연결 테스트</button>
+        <button class="btn pri" id="ghSave">저장</button>
+        <button class="btn sec" id="ghClear">연결 해제</button>
+      </div>
+      <div id="ghTestOut"></div>
+    </div>
+    <div class="set-sec">
+      <h4>데이터 백업 (이 기기 저장분)</h4>
+      <div class="btnrow">
+        <button class="btn sec" id="expBtn">내보내기 (복사)</button>
+        <button class="btn sec" id="impBtn">가져오기 (붙여넣기)</button>
+      </div>
+      <textarea class="f-input" id="ioArea" placeholder="내보내기를 누르면 여기에 데이터가 나옵니다. 가져오기는 여기에 붙여넣고 버튼을 누르세요." style="margin-top:8px; min-height:90px"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ================= 유틸 ================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WD = ['일','월','화','수','목','금','토'];
+const pad2 = n => String(n).padStart(2,'0');
+const fmtDate = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+const parseDate = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const todayStr = () => fmtDate(new Date());
+let toastTimer = null;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'), 2600); }
+function b64e(str){ const b=new TextEncoder().encode(str); let x=''; for(let i=0;i<b.length;i+=0x8000) x+=String.fromCharCode.apply(null, b.subarray(i,i+0x8000)); return btoa(x); }
+function b64d(s){ const bin=atob(String(s).replace(/\s/g,'')); const b=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) b[i]=bin.charCodeAt(i); return new TextDecoder().decode(b); }
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now()+'-'+Math.random().toString(36).slice(2));
+const numOr = (v, alt='') => { const s=String(v??'').trim(); if(s==='') return alt; const n=Number(s); return isNaN(n) ? alt : n; };
+
+/* ================= 저장 드라이버 ================= */
+const LS = {
+  get(k, alt){ try{ const v=localStorage.getItem(k); return v==null ? alt : JSON.parse(v); }catch(e){ return alt; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+function ghCfg(){ return LS.get('ilbo.gh', null); }
+
+const localDriver = {
+  mode: 'local',
+  async loadDay(date){ return LS.get('ilbo.day.'+date, {rows:[]}).rows || []; },
+  async mutateDay(date, fn){
+    const cur = LS.get('ilbo.day.'+date, {rows:[]});
+    const rows = fn(cur.rows || []);
+    LS.set('ilbo.day.'+date, {rows});
+    return rows;
+  },
+  async loadPresets(){ return LS.get('ilbo.presets', {workers:[],products:[],parts:[]}); },
+  async savePresets(p){ LS.set('ilbo.presets', p); },
+  async monthDays(ym){
+    const out = {};
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith('ilbo.day.'+ym)){
+        const date = k.slice(9);
+        out[date] = (LS.get(k,{rows:[]}).rows)||[];
+      }
+    }
+    return out;
+  }
+};
+
+function ghDriver(cfg){
+  const base = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/`;
+  const H = { 'Authorization':'Bearer '+cfg.token, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28' };
+  async function getFile(path){
+    const r = await fetch(base+path+'?ref='+encodeURIComponent(cfg.branch)+'&_='+Date.now(), {headers:H, cache:'no-store'});
+    if(r.status===404) return {json:null, sha:null};
+    if(!r.ok) throw new Error('GitHub 읽기 실패 ('+r.status+')');
+    const j = await r.json();
+    return {json: JSON.parse(b64d(j.content||'') || 'null'), sha: j.sha};
+  }
+  async function putFile(path, obj, sha, msg){
+    const body = {message: msg, content: b64e(JSON.stringify(obj, null, 1)), branch: cfg.branch};
+    if(sha) body.sha = sha;
+    const r = await fetch(base+path, {method:'PUT', headers:{...H,'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    if(r.status===409 || r.status===422) return false;
+    if(!r.ok){
+      let d=''; try{ d=(await r.json()).message||''; }catch(e){}
+      throw new Error('GitHub 저장 실패 ('+r.status+') '+d);
+    }
+    return true;
+  }
+  async function mutateJson(path, fn, msg){
+    for(let i=0;i<4;i++){
+      const {json, sha} = await getFile(path);
+      const next = fn(json);
+      if(await putFile(path, next, sha, msg)) return next;
+      await new Promise(res=>setTimeout(res, 400+Math.random()*600));
+    }
+    throw new Error('다른 기기와 저장이 겹쳤습니다. 다시 시도해 주세요.');
+  }
+  return {
+    mode: 'gh',
+    async loadDay(date){ const {json} = await getFile('data/'+date+'.json'); return (json && json.rows) || []; },
+    async mutateDay(date, fn){
+      const next = await mutateJson('data/'+date+'.json', j => ({rows: fn((j&&j.rows)||[])}), '일보 '+date);
+      return next.rows;
+    },
+    async loadPresets(){ const {json} = await getFile('data/presets.json'); return json || {workers:[],products:[],parts:[]}; },
+    async savePresets(p){ try{ await mutateJson('data/presets.json', ()=>p, '보기 목록'); }catch(e){} },
+    async monthDays(ym){
+      const r = await fetch(base+'data?ref='+encodeURIComponent(cfg.branch)+'&_='+Date.now(), {headers:H, cache:'no-store'});
+      if(r.status===404) return {};
+      if(!r.ok) throw new Error('GitHub 목록 실패 ('+r.status+')');
+      const list = await r.json();
+      const days = (Array.isArray(list)?list:[]).map(f=>f.name).filter(n=>n.startsWith(ym) && n.endsWith('.json')).map(n=>n.slice(0,-5));
+      const out = {};
+      await Promise.all(days.map(async d => { try{ out[d] = await this.loadDay(d); }catch(e){ out[d]=[]; } }));
+      return out;
+    }
+  };
+}
+
+let driver = localDriver;
+function initDriver(){
+  const cfg = ghCfg();
+  driver = (cfg && cfg.owner && cfg.repo && cfg.token) ? ghDriver(cfg) : localDriver;
+  const on = driver.mode==='gh';
+  $('#modeBadge').classList.toggle('on', on);
+  $('#modeTxt').textContent = on ? '공유 저장 중' : '이 기기 저장';
+}
+
+/* ================= 상태 ================= */
+const S = {
+  date: todayStr(),
+  tab: 'input',
+  rows: [],
+  presets: {workers:[],products:[],parts:[]},
+  me: LS.get('ilbo.me', {worker:'', hours:10}),
+  fit: true,
+  month: todayStr().slice(0,7),
+  editId: null,
+  loading: false
+};
+const CHECK_KEYS = ['cs','gap','inlet','face','bubble'];
+
+/* ================= 데이터 ================= */
+async function refreshDay(quiet){
+  try{
+    S.loading = true;
+    const rows = await driver.loadDay(S.date);
+    S.rows = rows;
+    renderAll();
+  }catch(e){ if(!quiet) toast('불러오기 실패: '+e.message); }
+  finally{ S.loading = false; }
+}
+async function loadPresets(){
+  try{ S.presets = await driver.loadPresets() || {workers:[],products:[],parts:[]}; }catch(e){}
+  S.presets.workers ||= []; S.presets.products ||= []; S.presets.parts ||= [];
+  renderMeChips();
+}
+function orderRows(rows){
+  const first = {};
+  rows.forEach(r => { if(!(r.worker in first) || (r.ts||0) < first[r.worker]) first[r.worker] = r.ts||0; });
+  return [...rows].sort((a,b) => (first[a.worker]-first[b.worker]) || ((a.ts||0)-(b.ts||0)));
+}
+async function upsertRow(row){
+  const rows = await driver.mutateDay(S.date, rows => {
+    const i = rows.findIndex(r => r.id === row.id);
+    if(i >= 0) rows = rows.map((r,j) => j===i ? row : r); else rows = [...rows, row];
+    return rows;
+  });
+  S.rows = rows;
+  updatePresetsFrom(row);
+  renderAll();
+}
+async function deleteRow(id){
+  const rows = await driver.mutateDay(S.date, rows => rows.filter(r => r.id !== id));
+  S.rows = rows; renderAll();
+}
+function updatePresetsFrom(row){
+  const p = S.presets; let ch = false;
+  const addU = (arr, v) => { v=String(v||'').trim(); if(v && !arr.includes(v)){ arr.unshift(v); ch=true; } };
+  addU(p.workers, row.worker); addU(p.products, row.product); addU(p.parts, row.defPart);
+  p.workers = p.workers.slice(0,20); p.products = p.products.slice(0,40); p.parts = p.parts.slice(0,20);
+  if(ch){ driver.savePresets(p); renderMeChips(); }
+}
+
+/* ================= 상단/탭 ================= */
+function renderDate(){
+  const d = parseDate(S.date);
+  $('#dateLabel').textContent = `${d.getMonth()+1}월 ${d.getDate()}일 (${WD[d.getDay()]})`;
+  $('#dateInput').value = S.date;
+}
+function setDate(ds){ S.date = ds; renderDate(); refreshDay(); }
+function setTab(t){
+  S.tab = t;
+  $('#view-input').style.display = t==='input' ? '' : 'none';
+  $('#view-sheet').style.display = t==='sheet' ? '' : 'none';
+  $('#view-month').style.display = t==='month' ? '' : 'none';
+  $('#addBtn').style.display = t==='input' ? '' : 'none';
+  $$('#tabbar button').forEach(b => b.classList.toggle('active', b.dataset.tab===t));
+  document.querySelector('main').classList.toggle('wide', t==='sheet');
+  if(t==='sheet'){ renderSheet(); requestAnimationFrame(applyZoom); }
+  if(t==='month') renderMonth();
+}
+
+/* ================= 입력 화면 ================= */
+function renderMeChips(){
+  const names = [...new Set([...(S.presets.workers||[]), ...S.rows.map(r=>r.worker)])].filter(Boolean);
+  const html = names.map(n => `<button class="chip ${n===S.me.worker?'sel':''}" data-n="${esc(n)}">${esc(n)}</button>`).join('') ||
+    `<span class="empty-note" style="padding:4px">아직 없음 — 기록 추가에서 이름을 입력하면 여기 나타납니다</span>`;
+  $('#meChips').innerHTML = html;
+  $$('#meChips .chip').forEach(b => b.onclick = () => {
+    S.me.worker = (S.me.worker===b.dataset.n) ? '' : b.dataset.n;
+    LS.set('ilbo.me', S.me); renderMeChips();
+  });
+}
+function marksOf(r){
+  const map = [['gasa',r.gasa],['상태',r.cs],['틈새',r.gap],['주입구',r.inlet],['제품면',r.face],['기포',r.bubble]];
+  return map.map(([k,v]) => {
+    if(!v) return '';
+    const cls = v==='Ⅹ' ? 'mB' : (v==='△' ? 'mW' : '');
+    return cls ? `<span class="${cls}" title="${k}">${esc(v)}</span>` : esc(v);
+  }).join('');
+}
+function renderInput(){
+  const rows = orderRows(S.rows);
+  const prodSum = rows.reduce((a,r)=>a+(Number(r.prod)||0),0);
+  const defSum = rows.reduce((a,r)=>a+(Number(r.defQty)||0),0);
+  const scrapSum = rows.reduce((a,r)=>a+(Number(r.scrapKg)||0),0);
+  $('#daysum').innerHTML = `
+    <div class="ds"><b>${rows.length}</b><span>기록</span></div>
+    <div class="ds"><b>${prodSum}</b><span>생산량(조)</span></div>
+    <div class="ds"><b>${defSum}</b><span>불량수량</span></div>
+    <div class="ds"><b>${scrapSum}</b><span>불량석고(kg)</span></div>`;
+  if(!rows.length){
+    $('#rowList').innerHTML = `<div class="empty-note">아직 기록이 없습니다.<br>아래 <b>＋ 기록 추가</b>를 눌러 시작하세요.</div>`;
+    return;
+  }
+  const groups = [];
+  rows.forEach(r => {
+    const g = groups[groups.length-1];
+    if(g && g.worker===r.worker) g.rows.push(r);
+    else groups.push({worker:r.worker, hours:r.hours, rows:[r]});
+  });
+  $('#rowList').innerHTML = groups.map(g => `
+    <div class="wgroup">
+      <div class="whead"><span class="wname">${esc(g.worker)}</span><span class="whr">${esc(g.hours??'')}${g.hours?'hr':''}</span></div>
+      ${g.rows.map(r => {
+        const bad = (Number(r.defQty)||0) > 0 || (Number(r.scrapKg)||0) > 0;
+        return `<div class="rowcard" data-id="${esc(r.id)}">
+          <div class="rc-main">
+            <div class="rc-prod">${esc(r.product)}</div>
+            <div class="rc-sub">
+              ${r.plan!=='' && r.plan!=null ? `<span class="badge plan">계획 ${esc(r.plan)}</span>` : ''}
+              <span>생산 <b>${esc(r.prod??'')}</b>조</span>
+              ${bad ? `<span class="badge bad">불량 ${esc(r.defQty||0)}개${r.scrapKg?' · '+esc(r.scrapKg)+'kg':''}${r.defPart?' · '+esc(r.defPart):''}</span>` : ''}
+              ${r.b1 ? `<span>분동1호 ${esc(r.b1)}</span>` : ''}
+              ${r.b2 ? `<span>분동2호 ${esc(r.b2)}</span>` : ''}
+              ${r.remark ? `<span>📝 ${esc(r.remark)}</span>` : ''}
+            </div>
+          </div>
+          <div class="rc-marks">${marksOf(r)}</div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+  $$('#rowList .rowcard').forEach(el => el.onclick = () => openEntry(S.rows.find(r=>r.id===el.dataset.id)));
+}
+
+/* ================= 기록 폼 ================= */
+function segHTML(){ return ['○','△','Ⅹ'].map(v=>`<button type="button" data-v="${v}">${v}</button>`).join(''); }
+function segInit(){
+  $$('.seg').forEach(seg => {
+    seg.innerHTML = segHTML();
+    seg.querySelectorAll('button').forEach(b => b.onclick = () => {
+      const was = b.classList.contains('sel');
+      seg.querySelectorAll('button').forEach(x=>x.classList.remove('sel'));
+      if(!was) b.classList.add('sel');
+      updateRemarkNeed();
+    });
+  });
+  $$('.gasa-row [data-g]').forEach(b => b.onclick = () => { $('#fGasa').value = b.dataset.g; updateRemarkNeed(); });
+  $('#fGasa').addEventListener('input', updateRemarkNeed);
+  $$('.bd-row [data-bd]').forEach(b => b.onclick = () => {
+    const inp = $('#'+b.dataset.bd); const v = inp.value.trim();
+    if(v && !v.endsWith('%')) inp.value = v+'%';
+    inp.focus();
+  });
+}
+function segSet(k, v){
+  const seg = document.querySelector(`.seg[data-k="${k}"]`);
+  seg.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.v===v));
+}
+function segGet(k){
+  const b = document.querySelector(`.seg[data-k="${k}"] button.sel`);
+  return b ? b.dataset.v : '';
+}
+function anyBadMark(){
+  const vals = [...CHECK_KEYS.map(segGet), $('#fGasa').value.trim()];
+  return vals.some(v => v==='△' || v==='Ⅹ');
+}
+function updateRemarkNeed(){
+  const need = anyBadMark() && !$('#fRemark').value.trim();
+  $('#fRemark').classList.toggle('need', need);
+}
+function fillWorkerChips(){
+  const names = [...new Set([...(S.presets.workers||[]), ...S.rows.map(r=>r.worker)])].filter(Boolean).slice(0,12);
+  $('#fWorkerChips').innerHTML = names.map(n=>`<button type="button" class="chip" data-n="${esc(n)}">${esc(n)}</button>`).join('');
+  $$('#fWorkerChips .chip').forEach(b => b.onclick = () => {
+    $('#fWorker').value = b.dataset.n;
+    const last = [...S.rows].reverse().find(r=>r.worker===b.dataset.n);
+    if(last && last.hours!=null && last.hours!=='') $('#fHours').value = last.hours;
+  });
+  const prods = [...new Set([...S.rows.map(r=>r.product), ...(S.presets.products||[])])].filter(Boolean).slice(0,14);
+  $('#fProductChips').innerHTML = prods.map(p=>`<button type="button" class="chip" data-p="${esc(p)}">${esc(p)}</button>`).join('');
+  $$('#fProductChips .chip').forEach(b => b.onclick = () => { $('#fProduct').value = b.dataset.p; });
+  const parts = [...new Set([...(S.presets.parts||[]), '상형1','하형1'])].filter(Boolean).slice(0,10);
+  $('#fPartChips').innerHTML = parts.map(p=>`<button type="button" class="chip" data-p="${esc(p)}">${esc(p)}</button>`).join('');
+  $$('#fPartChips .chip').forEach(b => b.onclick = () => { $('#fDefPart').value = b.dataset.p; });
+}
+function openEntry(row){
+  S.editId = row ? row.id : null;
+  $('#entryTitle').textContent = row ? '기록 수정' : '기록 추가';
+  $('#entryDel').style.display = row ? '' : 'none';
+  fillWorkerChips();
+  const me = S.me || {};
+  $('#fWorker').value = row ? row.worker : (me.worker||'');
+  $('#fHours').value = row ? (row.hours ?? '') : (me.hours ?? 10);
+  $('#fProduct').value = row ? row.product : '';
+  $('#fPlan').value = row ? (row.plan ?? '') : '';
+  $('#planZero').classList.toggle('sel', row ? String(row.plan)==='0' : false);
+  $('#fProd').value = row ? (row.prod ?? '') : '';
+  $('#fScrap').value = row ? (row.scrapKg ?? '') : '';
+  $('#fDefQty').value = row ? (row.defQty ?? '') : '';
+  $('#fDefPart').value = row ? (row.defPart ?? '') : '';
+  $('#defectBox').open = !!(row && ((Number(row.scrapKg)||0)>0 || (Number(row.defQty)||0)>0 || row.defPart));
+  $('#fGasa').value = row ? (row.gasa ?? '○') : '○';
+  CHECK_KEYS.forEach(k => segSet(k, row ? (row[k]||'') : '○'));
+  $('#fB1').value = row ? (row.b1 ?? '') : '';
+  $('#fB2').value = row ? (row.b2 ?? '') : '';
+  $('#fRemark').value = row ? (row.remark||'') : '';
+  updateRemarkNeed();
+  $('#entryOv').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if(!row && !$('#fWorker').value) $('#fWorker').focus();
+}
+function closeEntry(){ $('#entryOv').classList.remove('open'); document.body.style.overflow=''; }
+async function saveEntry(){
+  const worker = $('#fWorker').value.trim();
+  const product = $('#fProduct').value.trim();
+  if(!worker){ toast('작업자 이름을 입력하세요'); $('#fWorker').focus(); return; }
+  if(!product){ toast('제품명을 입력하세요'); $('#fProduct').focus(); return; }
+  if(anyBadMark() && !$('#fRemark').value.trim()){
+    toast('△·Ⅹ 체크 시 비고(사유)를 적어주세요'); $('#fRemark').classList.add('need'); $('#fRemark').focus(); return;
+  }
+  const old = S.editId ? S.rows.find(r=>r.id===S.editId) : null;
+  const row = {
+    id: S.editId || uid(),
+    worker, product,
+    hours: numOr($('#fHours').value, ''),
+    plan: $('#planZero').classList.contains('sel') ? 0 : numOr($('#fPlan').value, ''),
+    prod: numOr($('#fProd').value, ''),
+    scrapKg: numOr($('#fScrap').value, ''),
+    defQty: numOr($('#fDefQty').value, ''),
+    defPart: $('#fDefPart').value.trim(),
+    gasa: $('#fGasa').value.trim(),
+    cs: segGet('cs'), gap: segGet('gap'), inlet: segGet('inlet'),
+    face: segGet('face'), bubble: segGet('bubble'),
+    b1: $('#fB1').value.trim(), b2: $('#fB2').value.trim(),
+    remark: $('#fRemark').value.trim(),
+    ts: old ? old.ts : Date.now()
+  };
+  S.me = {worker, hours: row.hours || 10}; LS.set('ilbo.me', S.me);
+  const btn = $('#entrySave'); btn.disabled = true; btn.textContent = '저장 중…';
+  try{
+    await upsertRow(row);
+    closeEntry();
+    toast('저장되었습니다');
+  }catch(e){ toast(e.message); }
+  finally{ btn.disabled=false; btn.textContent='저장'; }
+}
+
+/* ================= 인쇄 시트 ================= */
+const SHEET_ROWS = 17;
+const COLW = [5.037,4.955,8.448,5.037,5.199,6.499,5.037,10.398,3.087,3.087,5.199,5.199,5.199,5.199,5.199,5.199,12.023];
+function sheetHeader(){
+  const th3 = (mainTxt, subTxt, exTxt, cls='', sz='') =>
+    `<th rowspan="2" class="${cls}"><div class="hl ${sz}">${mainTxt}</div><div class="hl s10">${subTxt}</div><div class="hl ${sz}">${exTxt}</div></th>`;
+  const thS = (l1,l2,l3,cls='') =>
+    `<th rowspan="2" class="${cls}"><div class="hl s9">${l1}</div><div class="hl s9">${l2}</div><div class="hl s9">${l3}</div></th>`;
+  return `<thead>
+    <tr class="h1">
+      ${th3('작업자','','(홍길동)')}
+      ${th3('작업시간','','(hr)')}
+      ${th3('제품명','','(CC267B)')}
+      ${th3('계획수량','완료시(O)','(조)')}
+      ${th3('생산량','(완성품)','(조)')}
+      ${th3('불량석고량','','(kg)')}
+      ${th3('불량수량','','(개수)')}
+      ${th3('불량부위','','(상형1)')}
+      ${thS('석고','가사','시간','bl-m')}
+      ${thS('CASE','','상태')}
+      ${thS('몰드','','틈새')}
+      ${thS('몰드','PVC','주입구')}
+      ${thS('몰드','','제품면')}
+      ${thS('몰드','','기포')}
+      <th colspan="2" class="bl-m"><div class="hl s9">분동</div><div class="hl s9">검사</div></th>
+      <th rowspan="2" class="bl-m br-m"><div class="hl">비고</div><div class="hl s10">△,Ⅹ 체크시 사유 및 특이사항</div><div class="hl"></div></th>
+    </tr>
+    <tr class="h2"><th class="bl-m">1호</th><th>2호</th></tr>
+  </thead>`;
+}
+function sheetPage(dateStr, rows, showWorkerFirst){
+  const d = parseDate(dateStr);
+  const cells = r => r ? [
+    r._showW ? esc(r.worker) : '',
+    r._showW ? esc(r.hours ?? '') : '',
+    esc(r.product),
+    esc(r.plan ?? ''),
+    esc(r.prod ?? ''),
+    esc(r.scrapKg ?? ''),
+    esc(r.defQty ?? ''),
+    esc(r.defPart ?? ''),
+    esc(r.gasa ?? ''), esc(r.cs), esc(r.gap), esc(r.inlet), esc(r.face), esc(r.bubble), esc(r.b1), esc(r.b2),
+    esc(r.remark ?? '')
+  ] : ['','','','','','','','','','','','','','','','',''];
+  let body = '';
+  for(let i=0;i<SHEET_ROWS;i++){
+    const c = cells(rows[i]);
+    body += `<tr>
+      <td class="num">${c[0]}</td><td class="num">${c[1]}</td><td>${c[2]}</td>
+      <td class="num">${c[3]}</td><td class="num">${c[4]}</td><td class="num">${c[5]}</td>
+      <td class="num">${c[6]}</td><td>${c[7]}</td>
+      <td class="bl-m">${c[8]}</td><td>${c[9]}</td><td>${c[10]}</td><td>${c[11]}</td><td>${c[12]}</td><td>${c[13]}</td>
+      <td class="bl-m">${c[14]}</td><td>${c[15]}</td>
+      <td class="rem bl-m br-m" colspan="1">${c[16]}</td>
+    </tr>`;
+  }
+  return `<div class="sheet">
+    <div class="sh-spacer"></div>
+    <div class="sh-titlerow"><div class="sh-title">조형 생산 일보</div></div>
+    <table class="sh-sign"><tr><td class="lbl">담당</td><td class="lbl">차장</td></tr><tr><td class="box"></td><td class="box"></td></tr></table>
+    <div class="sh-date">
+      <span class="dt">${d.getFullYear()} 년&nbsp;&nbsp;&nbsp;${d.getMonth()+1} 월&nbsp;&nbsp;&nbsp;${d.getDate()} 일&nbsp;&nbsp;&nbsp;${WD[d.getDay()]}요일</span>
+      <span class="note">*계획수량=해당기물 생산시작일에만 기록, 끝난 날에는 0으로 기록</span>
+      <span class="legend">(상태 : ○양호△보통Ⅹ불량)</span>
+    </div>
+    <table class="sh">
+      <colgroup>${COLW.map((w,i)=> i===16 ? `<col style="width:${w}%">` : `<col style="width:${w}%">`).join('')}</colgroup>
+      ${sheetHeader()}
+      <tbody>${body}</tbody>
+    </table>
+  </div>`;
+}
+function renderSheet(){
+  const rows = orderRows(S.rows);
+  rows.forEach((r,i) => { r._showW = i===0 || rows[i-1].worker!==r.worker; });
+  const pages = [];
+  for(let i=0;i<Math.max(1, Math.ceil(rows.length/SHEET_ROWS)); i++){
+    const slice = rows.slice(i*SHEET_ROWS, (i+1)*SHEET_ROWS);
+    if(slice.length && !slice[0]._showW) slice[0] = {...slice[0], _showW:true};
+    pages.push(sheetPage(S.date, slice));
+  }
+  $('#sheetzoom').innerHTML = pages.join('');
+  applyZoom();
+}
+function applyZoom(){
+  const wrap = $('#sheetwrap'), zoom = $('#sheetzoom');
+  const sheet = zoom.querySelector('.sheet');
+  if(!sheet || !sheet.offsetWidth || !wrap.clientWidth) return;
+  if(S.fit){
+    const sw = sheet.offsetWidth;
+    const scale = Math.min(1, (wrap.clientWidth-2) / sw);
+    zoom.style.transform = `scale(${scale})`;
+    zoom.style.width = sw+'px';
+    wrap.style.height = (zoom.scrollHeight*scale+10)+'px';
+    $('#zoomBtn').textContent = '100%';
+  }else{
+    zoom.style.transform = 'none'; zoom.style.width=''; wrap.style.height='';
+    $('#zoomBtn').textContent = '화면맞춤';
+  }
+}
+
+/* ================= 현황 ================= */
+async function renderMonth(){
+  const [y,m] = S.month.split('-').map(Number);
+  $('#monLabel').textContent = `${y}년 ${m}월`;
+  $('#monBody').innerHTML = `<div class="empty-note">불러오는 중…</div>`;
+  let days;
+  try{ days = await driver.monthDays(S.month); }
+  catch(e){ $('#monBody').innerHTML = `<div class="empty-note">불러오기 실패: ${esc(e.message)}</div>`; return; }
+  const dates = Object.keys(days).sort();
+  if(!dates.length){ $('#monBody').innerHTML = `<div class="empty-note">이 달에는 기록이 없습니다</div>`; return; }
+  let tp=0, td=0, ts=0;
+  const trs = dates.map(ds => {
+    const rows = days[ds]||[];
+    const p = rows.reduce((a,r)=>a+(Number(r.prod)||0),0);
+    const q = rows.reduce((a,r)=>a+(Number(r.defQty)||0),0);
+    const s = rows.reduce((a,r)=>a+(Number(r.scrapKg)||0),0);
+    tp+=p; td+=q; ts+=s;
+    const day = parseDate(ds).getDay();
+    return `<tr class="${day===0?'sun':day===6?'sat':''}" data-d="${ds}">
+      <td class="d">${Number(ds.slice(8,10))}일 (${WD[day]})</td>
+      <td>${rows.length}</td><td>${p}</td><td>${q}</td><td>${s||''}</td></tr>`;
+  }).join('');
+  $('#monBody').innerHTML = `<table class="mon">
+    <thead><tr><th>날짜</th><th>기록</th><th>생산량(조)</th><th>불량수</th><th>불량석고(kg)</th></tr></thead>
+    <tbody>${trs}</tbody>
+    <tfoot><tr><td class="d">합계</td><td></td><td>${tp}</td><td>${td}</td><td>${ts||''}</td></tr></tfoot>
+  </table>`;
+  $$('#monBody tbody tr').forEach(tr => tr.onclick = () => { setDate(tr.dataset.d); setTab('sheet'); });
+}
+
+/* ================= 설정 ================= */
+function openSettings(){
+  const c = ghCfg() || {};
+  $('#ghOwner').value = c.owner||''; $('#ghRepo').value = c.repo||'';
+  $('#ghBranch').value = c.branch||'main'; $('#ghToken').value = c.token||'';
+  $('#ghTestOut').textContent=''; $('#ghTestOut').className='';
+  $('#setOv').classList.add('open'); document.body.style.overflow='hidden';
+}
+function closeSettings(){ $('#setOv').classList.remove('open'); document.body.style.overflow=''; }
+async function ghTest(){
+  const o=$('#ghOwner').value.trim(), r=$('#ghRepo').value.trim(), t=$('#ghToken').value.trim();
+  const out = $('#ghTestOut');
+  if(!o||!r||!t){ out.textContent='소유자·저장소·토큰을 모두 입력하세요'; out.className='err'; return; }
+  out.textContent='확인 중…'; out.className='';
+  try{
+    const res = await fetch(`https://api.github.com/repos/${o}/${r}`, {headers:{'Authorization':'Bearer '+t,'Accept':'application/vnd.github+json'}, cache:'no-store'});
+    if(!res.ok) throw new Error(res.status===404 ? '저장소를 찾을 수 없습니다 (이름/토큰 권한 확인)' : res.status===401 ? '토큰이 올바르지 않습니다' : '실패 ('+res.status+')');
+    const j = await res.json();
+    if(j.permissions && !j.permissions.push) throw new Error('연결은 되지만 쓰기 권한이 없습니다 (토큰 Contents: Read and write 필요)');
+    out.textContent = `✓ 연결 성공: ${j.full_name}${j.private?' (비공개)':' (공개!)'} — 쓰기 가능`;
+    out.className='ok';
+  }catch(e){ out.textContent='✕ '+e.message; out.className='err'; }
+}
+function ghSaveCfg(){
+  const cfg = {owner:$('#ghOwner').value.trim(), repo:$('#ghRepo').value.trim(), branch:$('#ghBranch').value.trim()||'main', token:$('#ghToken').value.trim()};
+  if(!cfg.owner||!cfg.repo||!cfg.token){ toast('소유자·저장소·토큰을 입력하세요'); return; }
+  LS.set('ilbo.gh', cfg); initDriver(); closeSettings(); toast('공유 저장이 연결되었습니다');
+  loadPresets(); refreshDay();
+}
+function ghClearCfg(){
+  if(!confirm('GitHub 연결을 해제할까요? (이 기기 저장 모드로 전환)')) return;
+  localStorage.removeItem('ilbo.gh'); initDriver(); closeSettings(); toast('이 기기 저장 모드');
+  loadPresets(); refreshDay();
+}
+function exportData(){
+  const out = {days:{}, presets: LS.get('ilbo.presets',{})};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k && k.startsWith('ilbo.day.')) out.days[k.slice(9)] = LS.get(k,{rows:[]});
+  }
+  $('#ioArea').value = JSON.stringify(out);
+  $('#ioArea').select();
+  try{ document.execCommand('copy'); toast('복사되었습니다'); }catch(e){ toast('내용을 길게 눌러 복사하세요'); }
+}
+function importData(){
+  try{
+    const j = JSON.parse($('#ioArea').value);
+    let n=0;
+    Object.entries(j.days||{}).forEach(([d,v]) => { LS.set('ilbo.day.'+d, v); n++; });
+    if(j.presets) LS.set('ilbo.presets', j.presets);
+    toast(n+'일치 데이터를 가져왔습니다'); refreshDay(); loadPresets();
+  }catch(e){ toast('가져오기 실패: 형식이 올바르지 않습니다'); }
+}
+
+/* ================= 이벤트 ================= */
+function shiftDate(n){ const d=parseDate(S.date); d.setDate(d.getDate()+n); setDate(fmtDate(d)); }
+function init(){
+  const qd = new URLSearchParams(location.search).get('d');
+  if(qd && /^\d{4}-\d{2}-\d{2}$/.test(qd)) S.date = qd;
+  initDriver(); renderDate(); segInit();
+  $('#prevDay').onclick = () => shiftDate(-1);
+  $('#nextDay').onclick = () => shiftDate(1);
+  $('#todayBtn').onclick = () => setDate(todayStr());
+  $('#dateInput').onchange = e => { if(e.target.value) setDate(e.target.value); };
+  $$('#tabbar button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+  $('#addBtn').onclick = () => openEntry(null);
+  $('#entryClose').onclick = closeEntry;
+  $('#entrySave').onclick = saveEntry;
+  $('#entryDel').onclick = async () => {
+    if(!S.editId || !confirm('이 기록을 삭제할까요?')) return;
+    try{ await deleteRow(S.editId); closeEntry(); toast('삭제되었습니다'); }catch(e){ toast(e.message); }
+  };
+  $('#planZero').onclick = () => { $('#planZero').classList.toggle('sel'); if($('#planZero').classList.contains('sel')) $('#fPlan').value=''; };
+  $('#hrMinus').onclick = () => { $('#fHours').value = Math.max(0, (numOr($('#fHours').value,0)||0)-0.5); };
+  $('#hrPlus').onclick = () => { $('#fHours').value = (numOr($('#fHours').value,0)||0)+0.5; };
+  $('#prodMinus').onclick = () => { $('#fProd').value = Math.max(0, (numOr($('#fProd').value,0)||0)-1); };
+  $('#prodPlus').onclick = () => { $('#fProd').value = (numOr($('#fProd').value,0)||0)+1; };
+  $('#fRemark').addEventListener('input', updateRemarkNeed);
+  $('#printBtn').onclick = () => { renderSheet(); setTimeout(()=>window.print(), 100); };
+  $('#zoomBtn').onclick = () => { S.fit = !S.fit; applyZoom(); };
+  $('#reloadBtn').onclick = () => refreshDay();
+  $('#prevMon').onclick = () => { const [y,m]=S.month.split('-').map(Number); const d=new Date(y,m-2,1); S.month=`${d.getFullYear()}-${pad2(d.getMonth()+1)}`; renderMonth(); };
+  $('#nextMon').onclick = () => { const [y,m]=S.month.split('-').map(Number); const d=new Date(y,m,1); S.month=`${d.getFullYear()}-${pad2(d.getMonth()+1)}`; renderMonth(); };
+  $('#gearBtn').onclick = openSettings;
+  $('#setClose').onclick = closeSettings;
+  $('#ghTest').onclick = ghTest;
+  $('#ghSave').onclick = ghSaveCfg;
+  $('#ghClear').onclick = ghClearCfg;
+  $('#expBtn').onclick = exportData;
+  $('#impBtn').onclick = importData;
+  window.addEventListener('resize', () => { if(S.tab==='sheet') applyZoom(); });
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) refreshDay(true); });
+  window.addEventListener('beforeprint', renderSheet);
+  loadPresets(); refreshDay();
+}
+function renderAll(){ renderInput(); renderMeChips(); renderSheet(); }
+init();
+</script>
+</body>
+</html>
