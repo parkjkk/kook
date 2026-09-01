@@ -1,0 +1,1492 @@
+<title>조형 계산기</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #FBFAF8;
+    --card: #F1EFEA;
+    --card2: #E7E3DB;
+    --line: #D8D3C8;
+    --ink: #2B2B2B;
+    --muted: #5C5C5C;
+    --faint: #8A8A8A;
+    --accent: #B45309;
+    --accent-ink: #92400E;
+    --accent-line: #C2761C;
+    --on-accent: #FFFFFF;
+    --good: #2F7A55;
+    --good-fill: #6E9E7E;
+    --bad: #A93A3A;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #201C18;
+      --card: #2A251F;
+      --card2: #332D26;
+      --line: #453D33;
+      --ink: #EFEAE2;
+      --muted: #B0A698;
+      --faint: #8A8174;
+      --accent: #C2761C;
+      --accent-ink: #E19A4C;
+      --accent-line: #C2761C;
+      --on-accent: #FFFFFF;
+      --good: #8FC7A4;
+      --good-fill: #4E7E62;
+      --bad: #DE9C9C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #201C18;
+    --card: #2A251F;
+    --card2: #332D26;
+    --line: #453D33;
+    --ink: #EFEAE2;
+    --muted: #B0A698;
+    --faint: #8A8174;
+    --accent: #C2761C;
+    --accent-ink: #E19A4C;
+    --accent-line: #C2761C;
+    --on-accent: #FFFFFF;
+    --good: #8FC7A4;
+    --good-fill: #4E7E62;
+    --bad: #DE9C9C;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  main {
+    max-width: 26rem;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+  .title-block h1 {
+    margin: .1rem 0 0;
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    text-wrap: balance;
+  }
+  .credit {
+    font-size: .75rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+  .head-controls { display: flex; gap: .6rem; align-items: flex-end; flex-shrink: 0; }
+  .honsu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: .2rem;
+    flex-shrink: 0;
+  }
+  .honsu.off { opacity: .35; pointer-events: none; }
+  .unit-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .15rem;
+    padding: .15rem;
+    width: 5.5rem;
+    background: var(--card2);
+    border-radius: .5rem;
+  }
+  .unit-toggle button {
+    min-height: 2.45rem;
+    padding: .32rem 0;
+    font: inherit;
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: .4rem;
+    cursor: pointer;
+  }
+  .unit-toggle button.active { background: var(--accent); color: var(--on-accent); }
+  .unit-toggle button:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 2px; }
+  .gear {
+    width: 2.75rem;
+    height: 2.75rem;
+    font-size: 1.1rem;
+    background: var(--card2);
+    color: var(--muted);
+    border: 0;
+    border-radius: .5rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .gear:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 2px; }
+
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 50;
+  }
+  .sheet {
+    width: 100%;
+    max-width: 26rem;
+    max-height: 85vh;
+    max-height: 85dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--bg);
+    border-radius: 1rem 1rem 0 0;
+    padding: 1rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+  }
+  .sheet-head { display: flex; justify-content: space-between; align-items: center; }
+  .sheet-head h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+  .sheet-close {
+    width: 2.75rem;
+    height: 2.75rem;
+    font: inherit;
+    font-size: 1rem;
+    background: var(--card2);
+    color: var(--muted);
+    border: 0;
+    border-radius: .5rem;
+    cursor: pointer;
+  }
+  .set-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .45rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .set-name { font-size: .9rem; font-weight: 600; }
+  .set-name small { display: block; font-weight: 400; color: var(--faint); font-size: .72rem; }
+  .set-inputs { display: flex; align-items: center; gap: .3rem; flex-shrink: 0; }
+  .set-inputs input {
+    width: 3.3rem;
+    min-height: 2.75rem;
+    padding: .45rem .2rem;
+    text-align: center;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: .5rem;
+  }
+  .set-colon { color: var(--faint); font-weight: 600; }
+  .reset-btn {
+    margin-top: .35rem;
+    padding: .65rem;
+    font: inherit;
+    font-size: .9rem;
+    font-weight: 600;
+    background: var(--card2);
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: .6rem;
+    cursor: pointer;
+  }
+  .pub-box { display: flex; flex-direction: column; gap: .5rem; padding-top: .5rem; border-top: 1px solid var(--line); margin-top: .35rem; }
+  .pub-btn {
+    min-height: 2.75rem;
+    padding: .65rem;
+    font: inherit;
+    font-size: .95rem;
+    font-weight: 700;
+    background: var(--accent);
+    color: var(--on-accent);
+    border: 0;
+    border-radius: .6rem;
+    cursor: pointer;
+  }
+  .pub-btn:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 2px; }
+  .pub-token-row { display: flex; gap: .4rem; }
+  .pub-token-row input {
+    flex: 1;
+    min-height: 2.75rem;
+    padding: .45rem .6rem;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--ink);
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: .5rem;
+  }
+  .pub-save {
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    font: inherit;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--card2);
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    cursor: pointer;
+  }
+  .honsu label { font-size: .75rem; font-weight: 600; color: var(--muted); }
+  .honsu-field { position: relative; width: 5.5rem; }
+  .honsu-field input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: .45rem 1.6rem .45rem .6rem;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--ink);
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: .5rem;
+  }
+  .honsu-field .unit { font-size: .85rem; right: .55rem; }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .25rem;
+    padding: .25rem;
+    background: var(--card2);
+    border-radius: .75rem;
+  }
+  .tabs button {
+    min-height: 2.75rem;
+    padding: .65rem .1rem;
+    font: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: .55rem;
+    cursor: pointer;
+  }
+  .tabs button.active {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .tabs button:focus-visible {
+    outline: 2px solid var(--accent-line);
+    outline-offset: 2px;
+  }
+  input:focus-visible {
+    outline: 2px solid var(--accent-line);
+    outline-offset: 0;
+    border-color: var(--accent-line);
+  }
+  input.invalid { border-color: var(--bad); }
+
+  .pane { display: none; flex-direction: column; gap: 1rem; }
+  .pane.active { display: flex; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: .9rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+  }
+  .field { display: flex; flex-direction: column; gap: .35rem; }
+  .field > label { font-size: .85rem; font-weight: 600; color: var(--muted); }
+  .field-wrap { position: relative; }
+  .field-wrap input {
+    width: 100%;
+    padding: .8rem 2.6rem .8rem .9rem;
+    font: inherit;
+    font-size: 1.35rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1.5px solid var(--line);
+    border-radius: .65rem;
+  }
+  .unit {
+    position: absolute;
+    right: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--faint);
+    pointer-events: none;
+  }
+  input::placeholder { color: var(--faint); font-weight: 400; }
+
+  .result {
+    background: var(--card2);
+    border: 1px solid var(--line);
+    border-radius: .9rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+  }
+  .result .label { font-size: .8rem; font-weight: 600; letter-spacing: .08em; color: var(--muted); }
+  .result-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+  .chip {
+    font-size: .8rem;
+    font-weight: 700;
+    padding: .2rem .65rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .chip.ok { background: var(--good); color: var(--bg); }
+  .chip.err { background: var(--bad); color: var(--bg); }
+  .chip.wait { background: var(--card); color: var(--muted); border: 1px solid var(--line); }
+  .big {
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-ink);
+    letter-spacing: -.02em;
+  }
+  .big .u { font-size: 1.3rem; font-weight: 600; color: var(--muted); margin-left: .15rem; }
+  .big.empty { color: var(--faint); }
+
+  .big.ok { color: var(--good); }
+  .bar {
+    position: relative;
+    height: .55rem;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+  }
+  .bar-fill {
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width .25s ease;
+  }
+  .bar-fill.ok { background: var(--good-fill); }
+  .bar-mark {
+    position: absolute;
+    top: -.25rem;
+    bottom: -.25rem;
+    left: 94%;
+    width: 2px;
+    background: var(--muted);
+    border-radius: 1px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bar-fill { transition: none; }
+  }
+
+  .rows { display: flex; flex-direction: column; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .75rem;
+    padding: .5rem 0;
+  }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row .k { font-size: .9rem; color: var(--muted); }
+  .row .v {
+    font-size: 1.15rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .row .v .u { font-size: .85rem; font-weight: 500; color: var(--muted); margin-left: .1rem; }
+
+  .ratio-group {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .3rem;
+    padding: .3rem;
+    background: var(--card2);
+    border-radius: .65rem;
+  }
+  .ratio-group button {
+    padding: .6rem 0;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: .5rem;
+    cursor: pointer;
+  }
+  .ratio-group button.active { background: var(--accent); color: var(--on-accent); }
+  .ratio-group button:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 2px; }
+  .ratio-group.two { grid-template-columns: 1fr 1fr; }
+  .ratio-group.two button { font-size: .9rem; }
+  .ratio-group.types button { font-size: .9rem; padding: .55rem 0; }
+  .ratio-group.three { grid-template-columns: repeat(3, 1fr); }
+  .ratio-group.three button { font-size: .85rem; padding: .55rem 0; }
+  .dims-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+  .dims-grid input {
+    padding: .8rem 1.9rem .8rem .6rem;
+    font-size: 1.1rem;
+  }
+  .dims-grid .unit { right: .5rem; font-size: .8rem; }
+  .resin-note {
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+  }
+  .fixed-ratio {
+    padding: .6rem 0;
+    background: var(--card2);
+    border-radius: .65rem;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-ink);
+  }
+  [hidden] { display: none !important; }
+
+  .ab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .ab {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: .65rem;
+    padding: .75rem .85rem;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+  }
+  .ab-k { font-size: .8rem; font-weight: 700; letter-spacing: .06em; color: var(--accent-ink); }
+  .big.sub { font-size: 2rem; }
+
+  .hint { font-size: .85rem; color: var(--muted); margin: 0; }
+  .clear-btn {
+    align-self: flex-end;
+    min-height: 2.45rem;
+    padding: .4rem .8rem;
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--card2);
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    cursor: pointer;
+  }
+  footer p { font-size: .75rem; color: var(--faint); margin: 0; line-height: 1.6; }
+  footer code {
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+</style>
+
+<main>
+  <header>
+    <div class="title-block">
+      <h1>조형 계산기 <span class="credit">제작자 : 박진국</span></h1>
+    </div>
+    <div class="head-controls">
+      <button class="gear" id="settings-open" type="button" aria-label="계산 기준 설정">⚙</button>
+      <div class="honsu">
+        <label>단위</label>
+        <div class="unit-toggle">
+          <button type="button" id="unit-kg" class="active">㎏</button>
+          <button type="button" id="unit-g">g</button>
+        </div>
+      </div>
+      <div class="honsu" id="honsu-block">
+        <label for="honsu">혼수율</label>
+        <div class="honsu-field">
+          <input id="honsu" type="text" inputmode="decimal" value="75" placeholder="75" enterkeyhint="done" autocomplete="off">
+          <span class="unit">%</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button id="tab-dry" class="active" type="button" role="tab" aria-selected="true">건조율측정</button>
+    <button id="tab-gyp" type="button" role="tab" aria-selected="false">석고무게</button>
+    <button id="tab-ure" type="button" role="tab" aria-selected="false">수지무게</button>
+    <button id="tab-silica" type="button" role="tab" aria-selected="false">규사무게</button>
+  </div>
+
+  <!-- 건조율 -->
+  <section class="pane active" id="pane-dry" role="tabpanel">
+    <div class="card">
+      <div class="field">
+        <label for="dry-before">건조 전 몰드 무게 (성형 직후)</label>
+        <div class="field-wrap">
+          <input id="dry-before" type="text" inputmode="decimal" placeholder="예: 526" enterkeyhint="done" autocomplete="off">
+          <span class="unit" id="unit-dry-before">㎏</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="dry-after">건조 후 몰드 무게 (지금 잰 무게)</label>
+        <div class="field-wrap">
+          <input id="dry-after" type="text" inputmode="decimal" placeholder="예: 397" enterkeyhint="done" autocomplete="off">
+          <span class="unit" id="unit-dry-after">㎏</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="dry-tare">부수물 무게 (대차 등 · 없으면 비워두기)</label>
+        <div class="field-wrap">
+          <input id="dry-tare" type="text" inputmode="decimal" placeholder="0" enterkeyhint="done" autocomplete="off">
+          <span class="unit" id="unit-dry-tare">㎏</span>
+        </div>
+        <p class="hint">이 무게를 건조 전·후 무게에서 똑같이 빼고 계산합니다.</p>
+      </div>
+      <button type="button" class="clear-btn" id="dry-clear">입력 지우기</button>
+    </div>
+
+    <div class="result">
+      <div class="result-head">
+        <div class="label">건조율</div>
+        <span class="chip" id="dry-chip" hidden>기준 도달</span>
+      </div>
+      <div class="big empty" id="dry-rate">—</div>
+      <div class="bar"><div class="bar-fill" id="dry-bar"></div><div class="bar-mark"></div></div>
+      <p class="hint">건조 완료 기준 94~95% — 세로선(94%)을 넘으면 초록색으로 바뀝니다.</p>
+      <div class="rows">
+        <div class="row"><span class="k">기준(94%)까지 더 말릴 무게</span><span class="v" id="dry-togo">—</span></div>
+        <div class="row"><span class="k">남은 수분</span><span class="v" id="dry-water">—</span></div>
+        <div class="row"><span class="k">완전건조 무게 (이론값)</span><span class="v" id="dry-target">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 석고무게 -->
+  <section class="pane" id="pane-gyp" role="tabpanel">
+    <div class="card">
+      <div class="field">
+        <label>계산 방법</label>
+        <div class="ratio-group three" id="gyp-modes">
+          <button type="button" id="gyp-mw" class="active">몰드 무게</button>
+          <button type="button" id="gyp-mv">치수(부피)</button>
+          <button type="button" id="gyp-mh">손배합</button>
+        </div>
+      </div>
+      <div class="field" id="gyp-weight-field">
+        <label for="gyp-mold">몰드 무게 (성형 직후)</label>
+        <div class="field-wrap">
+          <input id="gyp-mold" type="text" inputmode="decimal" placeholder="예: 526" enterkeyhint="done" autocomplete="off">
+          <span class="unit" id="unit-gyp-mold">㎏</span>
+        </div>
+      </div>
+      <div class="field" id="gyp-dims-field" hidden>
+        <label>치수 (㎝)</label>
+        <div class="dims-grid">
+          <div class="field-wrap">
+            <input id="gyp-w" type="text" inputmode="decimal" placeholder="가로" enterkeyhint="done" autocomplete="off">
+            <span class="unit">㎝</span>
+          </div>
+          <div class="field-wrap">
+            <input id="gyp-d" type="text" inputmode="decimal" placeholder="세로" enterkeyhint="done" autocomplete="off">
+            <span class="unit">㎝</span>
+          </div>
+          <div class="field-wrap">
+            <input id="gyp-h" type="text" inputmode="decimal" placeholder="높이" enterkeyhint="done" autocomplete="off">
+            <span class="unit">㎝</span>
+          </div>
+        </div>
+        <p class="hint">부피만큼 채울 때 필요한 석고·물을 계산합니다.</p>
+      </div>
+      <div class="field" id="gyp-hand-field" hidden>
+        <label>먼저 넣은 것</label>
+        <div class="ratio-group two" id="gyp-hand-firsts">
+          <button type="button" id="gyp-hf-gyp" class="active">석고 먼저</button>
+          <button type="button" id="gyp-hf-water">물 먼저</button>
+        </div>
+      </div>
+      <div class="field" id="gyp-hand-input-field" hidden>
+        <label for="gyp-hand" id="gyp-hand-label">넣은 석고 무게</label>
+        <div class="field-wrap">
+          <input id="gyp-hand" type="text" inputmode="decimal" placeholder="예: 20" enterkeyhint="done" autocomplete="off">
+          <span class="unit" id="unit-gyp-hand">㎏</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="label" id="gyp-big-label">석고 (분말)</div>
+      <div class="big empty" id="gyp-powder">—</div>
+      <div class="rows">
+        <div class="row"><span class="k" id="gyp-row1-k">물 (혼수)</span><span class="v" id="gyp-water">—</span></div>
+        <div class="row" id="gyp-vol-row" hidden><span class="k">부피</span><span class="v" id="gyp-vol">—</span></div>
+        <div class="row" id="gyp-slurry-row" hidden><span class="k">슬러리 총량 (석고+물)</span><span class="v" id="gyp-slurry">—</span></div>
+        <div class="row"><span class="k">완전건조 무게 (이론값)</span><span class="v" id="gyp-target">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 우레탄 -->
+  <section class="pane" id="pane-ure" role="tabpanel">
+    <div class="card">
+      <div class="field">
+        <label>수지 종류</label>
+        <div class="ratio-group types" id="ure-types">
+          <button type="button" id="ure-t7845" class="active">7845</button>
+          <button type="button" id="ure-t3558">3558</button>
+          <button type="button" id="ure-tmat">매트</button>
+          <button type="button" id="ure-t5293">5293</button>
+          <button type="button" id="ure-txl300">XL300</button>
+          <button type="button" id="ure-tgc">표면</button>
+          <button type="button" id="ure-txl200">XL200</button>
+          <button type="button" id="ure-tfrp">FRP</button>
+        </div>
+        <div class="resin-note" id="ure-name">우레탄수지 · UR-7845 : UR-703</div>
+      </div>
+      <div class="field" id="ure-basis-field">
+        <label>입력 방법</label>
+        <div class="ratio-group two" id="ure-input-modes">
+          <button type="button" id="ure-im-total" class="active">총량 직접 입력</button>
+          <button type="button" id="ure-im-clay">점토 무게로</button>
+        </div>
+      </div>
+      <div class="field" id="ure-clay-state-field" hidden>
+        <label>점토 상태</label>
+        <div class="ratio-group two" id="ure-clay-states">
+          <button type="button" id="ure-cs-dry" class="active">마른 점토</button>
+          <button type="button" id="ure-cs-wet">젖은 점토</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="ure-total" id="ure-total-label">필요한 수지 총량</label>
+        <div class="field-wrap">
+          <input id="ure-total" type="text" inputmode="decimal" placeholder="예: 20" enterkeyhint="done" autocomplete="off">
+          <span class="unit" id="unit-ure-total">㎏</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>배합비 (A : B)</label>
+        <div class="ratio-group" id="ure-ratios">
+          <button type="button" id="ure-r6">10:6</button>
+          <button type="button" id="ure-r7" class="active">10:7</button>
+          <button type="button" id="ure-r8">10:8</button>
+          <button type="button" id="ure-r9">10:9</button>
+        </div>
+        <p class="hint" id="ure-flex-note">7845는 10:6~10:9 사이에서 선택 (발주 기준 10:7)</p>
+        <div class="fixed-ratio" id="ure-fixed" hidden>10 : 4.2 (고정)</div>
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="label">배합량</div>
+      <div class="ab-grid">
+        <div class="ab"><span class="ab-k" id="ure-ak">A · UR-7845</span><div class="big sub empty" id="ure-a">—</div></div>
+        <div class="ab"><span class="ab-k" id="ure-bk">B · UR-703</span><div class="big sub empty" id="ure-b">—</div></div>
+      </div>
+      <p class="hint" id="ure-hint">총량과 배합비를 고르면 A·B 무게가 나옵니다.</p>
+    </div>
+  </section>
+
+  <!-- 규사무게 -->
+  <section class="pane" id="pane-silica" role="tabpanel">
+    <div class="card">
+      <div class="field">
+        <label for="silica-sand">규사 무게</label>
+        <div class="field-wrap">
+          <input id="silica-sand" type="text" inputmode="decimal" placeholder="예: 30" enterkeyhint="done" autocomplete="off">
+          <span class="unit" id="unit-silica-sand">㎏</span>
+        </div>
+        <p class="hint" id="silica-ratio-hint">기준 비율 — 규사 : A : B = 30 : 3 : 1.2</p>
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="label">배합량</div>
+      <div class="ab-grid">
+        <div class="ab"><span class="ab-k">A</span><div class="big sub empty" id="silica-a">—</div></div>
+        <div class="ab"><span class="ab-k">B</span><div class="big sub empty" id="silica-b">—</div></div>
+      </div>
+      <p class="hint" id="silica-hint">규사 무게를 넣으면 A·B 무게가 나옵니다.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      계산식 (몰드_건조_측정_5.xlsx 기준) ·
+      <code>완전건조 = 몰드 × 100/(100+혼수율) × 172/145</code> ·
+      <code>건조율 = 완전건조 ÷ 건조 후 무게 × 100</code> ·
+      <code>석고 = 몰드 × 100/(100+혼수율)</code> ·
+      <code>치수 계산: 석고(㎏) = 부피(L) ÷ (혼수율/100 + 부피계수 0.3)</code> ·
+      <code>손배합: 물 = 석고 × 혼수율/100, 석고 = 물 × 100/혼수율</code> ·
+      <code>수지 A = 총량 × A비율/(A비율+B비율), B = 총량 − A (비율은 2026년 부재료 재고.xlsx 기준)</code> ·
+      <code>점토 환산: 우레탄 총량 = 점토무게 × %(기본 7845=85 · 3558=75, 젖은 점토는 −5%p)</code> ·
+      <code>규사 30㎏ 기준 A 3㎏ · B 1.2㎏ 비례</code>
+    </p>
+  </footer>
+</main>
+
+<div class="sheet-backdrop" id="settings" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="sheet-head">
+      <h2 id="settings-title">계산 기준 설정</h2>
+      <button class="sheet-close" id="settings-close" type="button" aria-label="닫기">✕</button>
+    </div>
+    <p class="hint">여기서 바꾼 값은 이 기기에 저장되어 계속 적용됩니다. (7845 배합비는 수지무게 탭에서 직접 선택)</p>
+    <div class="set-row">
+      <span class="set-name">3558<small>3558A : 3558B</small></span>
+      <span class="set-inputs"><input id="set-3558-a" type="text" inputmode="decimal" aria-label="3558 A 비율"><span class="set-colon">:</span><input id="set-3558-b" type="text" inputmode="decimal" aria-label="3558 B 비율"></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">매트<small>XL-93A : XL-93B · A무게 기준</small></span>
+      <span class="set-inputs"><input id="set-mat-a" type="text" inputmode="decimal" aria-label="매트 A 비율"><span class="set-colon">:</span><input id="set-mat-b" type="text" inputmode="decimal" aria-label="매트 B 비율"></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">5293<small>5293 : 5400</small></span>
+      <span class="set-inputs"><input id="set-5293-a" type="text" inputmode="decimal" aria-label="5293 A 비율"><span class="set-colon">:</span><input id="set-5293-b" type="text" inputmode="decimal" aria-label="5293 B 비율"></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">XL300<small>XL300A : XL300B</small></span>
+      <span class="set-inputs"><input id="set-xl300-a" type="text" inputmode="decimal" aria-label="XL300 A 비율"><span class="set-colon">:</span><input id="set-xl300-b" type="text" inputmode="decimal" aria-label="XL300 B 비율"></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">표면<small>GC2070 : GC11</small></span>
+      <span class="set-inputs"><input id="set-gc-a" type="text" inputmode="decimal" aria-label="표면수지 A 비율"><span class="set-colon">:</span><input id="set-gc-b" type="text" inputmode="decimal" aria-label="표면수지 B 비율"></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">XL200<small>XL200A : XL200</small></span>
+      <span class="set-inputs"><input id="set-xl200-a" type="text" inputmode="decimal" aria-label="XL200 A 비율"><span class="set-colon">:</span><input id="set-xl200-b" type="text" inputmode="decimal" aria-label="XL200 B 비율"></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">FRP<small>정일수지 : 경화제</small></span>
+      <span class="set-inputs"><input id="set-frp-a" type="text" inputmode="decimal" aria-label="FRP A 비율"><span class="set-colon">:</span><input id="set-frp-b" type="text" inputmode="decimal" aria-label="FRP B 비율"></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">7845 점토 비율<small>우레탄 총량 = 점토무게 × % · 기본 85</small></span>
+      <span class="set-inputs"><input id="set-clay-7845" type="text" inputmode="decimal" aria-label="7845 점토 비율 퍼센트"><span class="set-colon">%</span></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">3558 점토 비율<small>우레탄 총량 = 점토무게 × % · 기본 75</small></span>
+      <span class="set-inputs"><input id="set-clay-3558" type="text" inputmode="decimal" aria-label="3558 점토 비율 퍼센트"><span class="set-colon">%</span></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">젖은 점토 차이<small>젖은 점토는 %에서 이만큼 뺌 · 기본 5</small></span>
+      <span class="set-inputs"><input id="set-clay-wet" type="text" inputmode="decimal" aria-label="젖은 점토 차이 퍼센트포인트"><span class="set-colon">%p</span></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">석고 부피계수<small>치수(부피) 계산용 · 기본 0.3 — 낮을수록 여유 있게</small></span>
+      <span class="set-inputs"><input id="set-gyp-vf" type="text" inputmode="decimal" aria-label="석고 부피계수"></span>
+    </div>
+    <div class="set-row">
+      <span class="set-name">규사<small>규사 : A : B</small></span>
+      <span class="set-inputs"><input id="set-silica-base" type="text" inputmode="decimal" aria-label="규사 기준량"><span class="set-colon">:</span><input id="set-silica-a" type="text" inputmode="decimal" aria-label="규사 A 비율"><span class="set-colon">:</span><input id="set-silica-b" type="text" inputmode="decimal" aria-label="규사 B 비율"></span>
+    </div>
+    <button class="reset-btn" id="settings-reset" type="button">기본값으로 되돌리기</button>
+    <div class="pub-box">
+      <button class="pub-btn" id="site-publish" type="button">📤 지금 설정을 사이트에 게시</button>
+      <div class="pub-token-row" id="pub-token-row" hidden>
+        <input id="pub-token" type="password" placeholder="GitHub 토큰 붙여넣기" autocomplete="off" aria-label="GitHub 토큰">
+        <button class="pub-save" id="pub-token-save" type="button">저장</button>
+      </div>
+      <p class="hint" id="pub-status">게시하면 위 설정값이 사이트 기본값이 되어 모든 휴대폰에 적용됩니다.</p>
+    </div>
+  </div>
+</div>
+
+<script id="site-config" type="application/json">null</script>
+
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+
+  // '5,000' 같은 천단위 콤마는 제거하고, '1,5' 같은 콤마 소수점은 점으로 바꾼다
+  function parseNum(raw) {
+    var v = String(raw).trim();
+    if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(v)) v = v.replace(/,/g, '');
+    v = v.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+    if (v === '') return null;
+    var n = parseFloat(v);
+    return isFinite(n) && n > 0 ? n : null;
+  }
+  function num(el) { return parseNum(el.value); }
+  function act(el, on) {
+    el.classList.toggle('active', on);
+    el.setAttribute('aria-pressed', String(on));
+  }
+  function fmt(n, d) {
+    return n.toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
+  var weightUnit = 'kg';
+  var WEIGHT_IDS = ['dry-before', 'dry-after', 'dry-tare', 'gyp-mold', 'gyp-hand', 'ure-total', 'silica-sand'];
+  var PLACEHOLDERS = { 'dry-before': '예: 526', 'dry-after': '예: 397', 'dry-tare': '0', 'gyp-mold': '예: 526', 'gyp-hand': '예: 20', 'ure-total': '예: 20', 'silica-sand': '예: 30' };
+  function UL() { return weightUnit === 'g' ? 'g' : '㎏'; }
+  function fmtW(n) { return fmt(n, weightUnit === 'g' ? 0 : 1); }
+  function fmtW2(n) { return fmt(n, weightUnit === 'g' ? 1 : 2); }
+  function setWeightUnit(u) {
+    var next = u === 'g' ? 'g' : 'kg';
+    var converted = false;
+    if (next !== weightUnit) {
+      // 단위가 바뀌면 이미 입력된 무게도 같은 양이 되도록 환산해 준다 (치수 ㎝는 제외)
+      var f = next === 'g' ? 1000 : 0.001;
+      WEIGHT_IDS.forEach(function (id) {
+        var n = num($(id));
+        if (n !== null) { $(id).value = String(+(n * f).toFixed(3)); converted = true; }
+      });
+    }
+    weightUnit = next;
+    act($('unit-kg'), weightUnit === 'kg');
+    act($('unit-g'), weightUnit === 'g');
+    WEIGHT_IDS.forEach(function (id) {
+      $('unit-' + id).textContent = UL();
+      if (id !== 'dry-tare') $(id).placeholder = weightUnit === 'g' ? '무게 입력' : PLACEHOLDERS[id];
+    });
+    try { localStorage.setItem('mold-calc-unit', weightUnit); } catch (e) {}
+    if (converted) saveDryInputs();
+    calcAll();
+  }
+
+  function setBig(el, text, empty) {
+    el.innerHTML = text;
+    el.classList.toggle('empty', !!empty);
+  }
+  function setRow(el, n, unit) {
+    el.innerHTML = n === null ? '—' : fmtW(n) + '<span class="u">' + unit + '</span>';
+  }
+
+  function honsuyul() {
+    var h = num($('honsu'));
+    $('honsu').classList.toggle('invalid', h === null && $('honsu').value.trim() !== '');
+    return h === null ? 75 : h;
+  }
+  function dryWeight(mold) {
+    return mold * 100 / (100 + honsuyul()) * 172 / 145;
+  }
+
+  function tare() {
+    var n = parseNum($('dry-tare').value);
+    return n === null ? 0 : n;
+  }
+
+  function calcDry() {
+    var t = tare();
+    var before = num($('dry-before'));
+    var after = num($('dry-after'));
+    if (before !== null) { before -= t; if (before <= 0) before = null; }
+    if (after !== null) { after -= t; if (after <= 0) after = null; }
+    var target = before === null ? null : dryWeight(before);
+
+    setRow($('dry-target'), target, UL());
+
+    if (target === null || after === null) {
+      setBig($('dry-rate'), '—', true);
+      $('dry-rate').classList.remove('ok');
+      $('dry-bar').style.width = '0';
+      $('dry-bar').classList.remove('ok');
+      $('dry-chip').hidden = true;
+      $('dry-water').textContent = '—';
+      $('dry-togo').textContent = '—';
+      return;
+    }
+    var STD = 94;
+    var rate = target / after * 100;
+    var ok = rate >= STD;
+    setBig($('dry-rate'), fmt(rate, 1) + '<span class="u">%</span>', false);
+    $('dry-rate').classList.toggle('ok', ok);
+    $('dry-bar').style.width = Math.max(0, Math.min(100, rate)) + '%';
+    $('dry-bar').classList.toggle('ok', ok);
+
+    var chip = $('dry-chip');
+    chip.hidden = false;
+    if (after > before) {
+      chip.textContent = '입력 확인';
+      chip.className = 'chip err';
+    } else {
+      chip.textContent = ok ? '기준 도달' : '건조 중';
+      chip.className = 'chip ' + (ok ? 'ok' : 'wait');
+    }
+
+    setRow($('dry-water'), Math.max(0, after - target), UL());
+    setRow($('dry-togo'), Math.max(0, after - target * 100 / STD), UL());
+  }
+
+  // 치수(부피) 계산: 석고(kg) = 부피(L) / (혼수율/100 + 부피계수)
+  // 부피계수 = 석고 1kg의 부피(L). 이론값 0.377(비중 2.65)이지만 현장 기준 0.3 — 낮을수록 여유 있게 나옴 (2026-09-01 사용자 확정)
+  var gypMode = 'w';
+  var GYP_VF_DEFAULT = 0.3;
+  var GYP_VF = GYP_VF_DEFAULT;
+
+  var handFirst = 'gyp';
+
+  function updateGypLabels() {
+    if (gypMode === 'h') {
+      var wf = handFirst === 'water';
+      $('gyp-big-label').textContent = wf ? '넣을 석고 (분말)' : '넣을 물';
+      $('gyp-hand-label').textContent = wf ? '넣은 물 무게' : '넣은 석고 무게';
+      $('gyp-row1-k').textContent = wf ? '물 (먼저 넣은 것)' : '석고 (먼저 넣은 것)';
+    } else {
+      $('gyp-big-label').textContent = '석고 (분말)';
+      $('gyp-row1-k').textContent = '물 (혼수)';
+    }
+  }
+
+  function setGypMode(m) {
+    gypMode = m === 'v' ? 'v' : m === 'h' ? 'h' : 'w';
+    act($('gyp-mw'), gypMode === 'w');
+    act($('gyp-mv'), gypMode === 'v');
+    act($('gyp-mh'), gypMode === 'h');
+    $('gyp-weight-field').hidden = gypMode !== 'w';
+    $('gyp-dims-field').hidden = gypMode !== 'v';
+    $('gyp-hand-field').hidden = gypMode !== 'h';
+    $('gyp-hand-input-field').hidden = gypMode !== 'h';
+    $('gyp-vol-row').hidden = gypMode !== 'v';
+    $('gyp-slurry-row').hidden = gypMode === 'w';
+    try { localStorage.setItem('mold-calc-gyp-mode', gypMode); } catch (e) {}
+    updateGypLabels();
+    calcGyp();
+  }
+
+  function setHandFirst(f) {
+    handFirst = f === 'water' ? 'water' : 'gyp';
+    act($('gyp-hf-gyp'), handFirst === 'gyp');
+    act($('gyp-hf-water'), handFirst === 'water');
+    try { localStorage.setItem('mold-calc-hand-first', handFirst); } catch (e) {}
+    updateGypLabels();
+    calcGyp();
+  }
+
+  function calcGyp() {
+    var hon = honsuyul();
+    var powder = null, water = null, volL = null, big = null, row1 = null;
+    if (gypMode === 'w') {
+      var mold = num($('gyp-mold'));
+      if (mold !== null) {
+        powder = mold * 100 / (100 + hon);
+        water = powder * hon / 100;
+        big = powder; row1 = water;
+      }
+    } else if (gypMode === 'v') {
+      var w = num($('gyp-w')), d = num($('gyp-d')), ht = num($('gyp-h'));
+      if (w !== null && d !== null && ht !== null) {
+        volL = w * d * ht / 1000;
+        var powderKg = volL / (hon / 100 + GYP_VF);
+        powder = weightUnit === 'g' ? powderKg * 1000 : powderKg;
+        water = powder * hon / 100;
+        big = powder; row1 = water;
+      }
+    } else {
+      var inp = num($('gyp-hand'));
+      if (inp !== null) {
+        if (handFirst === 'water') {
+          water = inp;
+          powder = water * 100 / hon;
+          big = powder; row1 = water;
+        } else {
+          powder = inp;
+          water = powder * hon / 100;
+          big = water; row1 = powder;
+        }
+      }
+    }
+    if (powder === null) {
+      setBig($('gyp-powder'), '—', true);
+      $('gyp-water').textContent = '—';
+      $('gyp-target').textContent = '—';
+      $('gyp-vol').textContent = '—';
+      $('gyp-slurry').textContent = '—';
+      return;
+    }
+    setBig($('gyp-powder'), fmtW(big) + '<span class="u">' + UL() + '</span>', false);
+    setRow($('gyp-water'), row1, UL());
+    setRow($('gyp-target'), powder * 172 / 145, UL());
+    if (gypMode !== 'w') setRow($('gyp-slurry'), powder + water, UL());
+    if (volL !== null) $('gyp-vol').innerHTML = fmt(volL, 2) + '<span class="u">L</span>';
+  }
+
+  // 배합비 출처: 2026년 부재료 재고.xlsx (rb가 null이면 유동 배합 — 버튼으로 선택)
+  // basis 'a': 총량이 아니라 A제 무게를 입력받아 B를 비율로 계산 (매트수지 — 경화제 부피가 작아 A무게 기준)
+  var RESINS = {
+    '7845':  { label: '7845',  name: '우레탄수지', a: 'UR-7845', b: 'UR-703', ra: 10, rb: null, clay: 85 },
+    '3558':  { label: '3558',  name: '우레탄수지', a: '3558A',   b: '3558B',  ra: 10, rb: 4.2,  clay: 75 },
+    'mat':   { label: '매트',  name: '매트수지',   a: 'XL-93A',  b: 'XL-93B', ra: 5,  rb: 1, basis: 'a' },
+    '5293':  { label: '5293',  name: '적층수지',   a: '5293',    b: '5400',   ra: 10, rb: 2 },
+    'xl300': { label: 'XL300', name: '적층수지',   a: 'XL300A',  b: 'XL300B', ra: 10, rb: 4 },
+    'gc':    { label: '표면',  name: '표면수지',   a: 'GC2070',  b: 'GC11',   ra: 10, rb: 1 },
+    'xl200': { label: 'XL200', name: '접착제',     a: 'XL200A',  b: 'XL200',  ra: 10, rb: 2 },
+    'frp':   { label: 'FRP',   name: '정일수지',   a: 'FRP',     b: '경화제', ra: 80, rb: 1 }
+  };
+  var URE_KEYS = ['7845', '3558', 'mat', '5293', 'xl300', 'gc', 'xl200', 'frp'];
+  var SET_KEYS = ['3558', 'mat', '5293', 'xl300', 'gc', 'xl200', 'frp'];
+  var RESIN_DEFAULTS = {};
+  SET_KEYS.forEach(function (k) { RESIN_DEFAULTS[k] = [RESINS[k].ra, RESINS[k].rb]; });
+  var CLAY_KEYS = ['7845', '3558'];
+  var CLAY_DEFAULTS = {};
+  CLAY_KEYS.forEach(function (k) { CLAY_DEFAULTS[k] = RESINS[k].clay; });
+  var SIL_DEFAULT = [30, 3, 1.2];
+  var SIL = { base: 30, a: 3, b: 1.2 };
+  var ureRatio = 7;
+  var ureType = '7845';
+
+  function setUreRatio(r) {
+    ureRatio = r;
+    [6, 7, 8, 9].forEach(function (n) {
+      act($('ure-r' + n), n === r);
+    });
+    try { localStorage.setItem('mold-calc-ure-ratio', String(r)); } catch (e) {}
+    calcUre();
+  }
+
+  function setUreType(t) {
+    if (!RESINS[t]) t = '7845';
+    ureType = t;
+    var R = RESINS[t];
+    URE_KEYS.forEach(function (k) {
+      act($('ure-t' + k), k === t);
+    });
+    var flex = R.rb === null;
+    $('ure-ratios').hidden = !flex;
+    $('ure-flex-note').hidden = !flex;
+    $('ure-fixed').hidden = flex;
+    if (!flex) $('ure-fixed').textContent = R.a + ' : ' + R.b + ' = ' + R.ra + ' : ' + R.rb + ' (고정)';
+    $('ure-name').textContent = R.name + ' · ' + R.a + ' : ' + R.b;
+    $('ure-basis-field').hidden = !R.clay;
+    updateUreLabels();
+    $('ure-ak').textContent = 'A · ' + R.a;
+    $('ure-bk').textContent = 'B · ' + R.b;
+    try { localStorage.setItem('mold-calc-ure-type', t); } catch (e) {}
+    calcUre();
+  }
+
+  var ureImode = 'total';
+  var clayState = 'dry';
+  var CLAY_WET_DEFAULT = 5;
+  var CLAY_WET = CLAY_WET_DEFAULT;
+
+  function effClayPct(R) {
+    return Math.max(R.clay - (clayState === 'wet' ? CLAY_WET : 0), 1);
+  }
+
+  function updateUreLabels() {
+    var R = RESINS[ureType];
+    var label;
+    if (ureImode === 'clay' && R.clay) {
+      label = '점토 무게 — 우레탄 총량 = 점토 × ' + effClayPct(R) + '%';
+    } else if (R.basis === 'a') {
+      label = 'A제(' + R.a + ') 무게 — B는 자동 계산';
+    } else {
+      label = '필요한 수지 총량';
+    }
+    $('ure-total-label').textContent = label;
+    $('ure-clay-state-field').hidden = !(R.clay && ureImode === 'clay');
+  }
+
+  function setUreImode(m) {
+    ureImode = m === 'clay' ? 'clay' : 'total';
+    act($('ure-im-total'), ureImode === 'total');
+    act($('ure-im-clay'), ureImode === 'clay');
+    try { localStorage.setItem('mold-calc-ure-imode', ureImode); } catch (e) {}
+    updateUreLabels();
+    calcUre();
+  }
+
+  function setClayState(s) {
+    clayState = s === 'wet' ? 'wet' : 'dry';
+    act($('ure-cs-dry'), clayState === 'dry');
+    act($('ure-cs-wet'), clayState === 'wet');
+    try { localStorage.setItem('mold-calc-clay-state', clayState); } catch (e) {}
+    updateUreLabels();
+    calcUre();
+  }
+
+  function calcUre() {
+    var input = num($('ure-total'));
+    if (input === null) {
+      setBig($('ure-a'), '—', true);
+      setBig($('ure-b'), '—', true);
+      var R0 = RESINS[ureType];
+      $('ure-hint').textContent = ureImode === 'clay' && R0.clay
+        ? '점토 무게를 넣으면 A·B 무게가 나옵니다.'
+        : R0.basis === 'a'
+          ? 'A제 무게를 넣으면 B 무게가 나옵니다.'
+          : '총량과 배합비를 고르면 A·B 무게가 나옵니다.';
+      return;
+    }
+    var R = RESINS[ureType];
+    var ra = R.ra;
+    var rb = R.rb === null ? ureRatio : R.rb;
+    var wa, wb, total;
+    var clayMode = ureImode === 'clay' && R.clay;
+    var clayPct = clayMode ? effClayPct(R) : 0;
+    if (clayMode) {
+      total = input * clayPct / 100;
+      wa = total * ra / (ra + rb);
+      wb = total - wa;
+    } else if (R.basis === 'a') {
+      wa = input;
+      wb = input * rb / ra;
+      total = wa + wb;
+    } else {
+      total = input;
+      wa = total * ra / (ra + rb);
+      wb = total - wa;
+    }
+    var u = UL();
+    setBig($('ure-a'), fmtW(wa) + '<span class="u">' + u + '</span>', false);
+    setBig($('ure-b'), fmtW(wb) + '<span class="u">' + u + '</span>', false);
+    var head = clayMode
+      ? R.label + ' · ' + (clayState === 'wet' ? '젖은' : '마른') + ' 점토 ' + fmtW2(input) + u + ' × ' + clayPct + '% · ' + ra + ':' + rb + ' 기준'
+      : R.label + ' · ' + ra + ':' + rb + ' 기준';
+    $('ure-hint').textContent = head + ' — A ' + fmtW2(wa) + u + ' + B ' + fmtW2(wb) + u + ' = 총 ' + fmtW2(total) + u;
+  }
+
+  var SILICA_HINT = '규사 무게를 넣으면 A·B 무게가 나옵니다.';
+
+  function calcSilica() {
+    var sand = num($('silica-sand'));
+    if (sand === null) {
+      setBig($('silica-a'), '—', true);
+      setBig($('silica-b'), '—', true);
+      $('silica-hint').textContent = SILICA_HINT;
+      return;
+    }
+    var u = UL();
+    var wa = sand * SIL.a / SIL.base;
+    var wb = sand * SIL.b / SIL.base;
+    setBig($('silica-a'), fmtW(wa) + '<span class="u">' + u + '</span>', false);
+    setBig($('silica-b'), fmtW(wb) + '<span class="u">' + u + '</span>', false);
+    $('silica-hint').textContent = '규사 ' + fmtW(sand) + u + ' 기준 — A ' + fmtW2(wa) + u + ' + B ' + fmtW2(wb) + u;
+  }
+
+  function updateSilicaHint() {
+    $('silica-ratio-hint').textContent = '기준 비율 — 규사 : A : B = ' + SIL.base + ' : ' + SIL.a + ' : ' + SIL.b;
+  }
+
+  function calcAll() { calcDry(); calcGyp(); calcUre(); calcSilica(); }
+
+  // ---- 계산 기준 설정 ----
+  function ratioNum(el) { return parseNum(el.value); }
+
+  function fillSettings() {
+    SET_KEYS.forEach(function (k) {
+      $('set-' + k + '-a').value = String(RESINS[k].ra);
+      $('set-' + k + '-b').value = String(RESINS[k].rb);
+    });
+    $('set-silica-base').value = String(SIL.base);
+    $('set-silica-a').value = String(SIL.a);
+    $('set-silica-b').value = String(SIL.b);
+    $('set-gyp-vf').value = String(GYP_VF);
+    CLAY_KEYS.forEach(function (k) { $('set-clay-' + k).value = String(RESINS[k].clay); });
+    $('set-clay-wet').value = String(CLAY_WET);
+  }
+
+  function configData() {
+    var data = { silica: [SIL.base, SIL.a, SIL.b], gypvf: GYP_VF, clay: {}, claywet: CLAY_WET };
+    SET_KEYS.forEach(function (k) { data[k] = [RESINS[k].ra, RESINS[k].rb]; });
+    CLAY_KEYS.forEach(function (k) { data.clay[k] = RESINS[k].clay; });
+    return data;
+  }
+
+  function saveRatios() {
+    try { localStorage.setItem('mold-calc-ratios', JSON.stringify(configData())); } catch (e) {}
+  }
+
+  function posNum(v) {
+    var n = Number(v);
+    return isFinite(n) && n > 0 ? n : null;
+  }
+
+  function applyConfigData(data) {
+    if (!data) return;
+    SET_KEYS.forEach(function (k) {
+      var p = data[k];
+      if (!p) return;
+      var a = posNum(p[0]), b = posNum(p[1]);
+      if (a !== null && b !== null) { RESINS[k].ra = a; RESINS[k].rb = b; }
+    });
+    var s = data.silica || [];
+    var sb = posNum(s[0]), sa = posNum(s[1]), sc = posNum(s[2]);
+    if (sb !== null && sa !== null && sc !== null) { SIL.base = sb; SIL.a = sa; SIL.b = sc; }
+    var vf = posNum(data.gypvf);
+    if (vf !== null) GYP_VF = vf;
+    if (data.clay) {
+      CLAY_KEYS.forEach(function (k) {
+        var c = posNum(data.clay[k]);
+        if (c !== null) RESINS[k].clay = c;
+      });
+    }
+    var cw = posNum(data.claywet);
+    if (cw !== null) CLAY_WET = cw;
+  }
+
+  function loadRatios() {
+    try { applyConfigData(JSON.parse(localStorage.getItem('mold-calc-ratios'))); } catch (e) {}
+  }
+
+  function readSettings() {
+    SET_KEYS.forEach(function (k) {
+      var a = ratioNum($('set-' + k + '-a'));
+      var b = ratioNum($('set-' + k + '-b'));
+      if (a !== null) RESINS[k].ra = a;
+      if (b !== null) RESINS[k].rb = b;
+    });
+    var base = ratioNum($('set-silica-base'));
+    var sa = ratioNum($('set-silica-a'));
+    var sb = ratioNum($('set-silica-b'));
+    if (base !== null) SIL.base = base;
+    if (sa !== null) SIL.a = sa;
+    if (sb !== null) SIL.b = sb;
+    var vf = ratioNum($('set-gyp-vf'));
+    if (vf !== null) GYP_VF = vf;
+    CLAY_KEYS.forEach(function (k) {
+      var c = ratioNum($('set-clay-' + k));
+      if (c !== null) RESINS[k].clay = c;
+    });
+    var cw = ratioNum($('set-clay-wet'));
+    if (cw !== null) CLAY_WET = cw;
+    saveRatios();
+    setUreType(ureType);
+    updateSilicaHint();
+    calcSilica();
+    calcGyp();
+  }
+
+  function resetRatios() {
+    SET_KEYS.forEach(function (k) {
+      RESINS[k].ra = RESIN_DEFAULTS[k][0];
+      RESINS[k].rb = RESIN_DEFAULTS[k][1];
+    });
+    SIL.base = SIL_DEFAULT[0]; SIL.a = SIL_DEFAULT[1]; SIL.b = SIL_DEFAULT[2];
+    GYP_VF = GYP_VF_DEFAULT;
+    CLAY_KEYS.forEach(function (k) { RESINS[k].clay = CLAY_DEFAULTS[k]; });
+    CLAY_WET = CLAY_WET_DEFAULT;
+    try { localStorage.removeItem('mold-calc-ratios'); } catch (e) {}
+    fillSettings();
+    setUreType(ureType);
+    updateSilicaHint();
+    calcSilica();
+    calcGyp();
+  }
+
+  // ---- 사이트 게시 (GitHub API — gongmu 대시보드와 같은 방식) ----
+  var SITE_API = 'https://api.github.com/repos/parkjkk/kook/contents/mold.html';
+
+  function b64utf8(str) {
+    var bytes = new TextEncoder().encode(str);
+    var bin = '';
+    for (var i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+    return btoa(bin);
+  }
+
+  function pubStatus(msg) { $('pub-status').textContent = msg; }
+
+  function publishConfig(token) {
+    pubStatus('게시 중...');
+    var hdr = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' };
+    Promise.all([
+      fetch(SITE_API + '?ref=main', { headers: hdr }).then(function (r) {
+        if (r.status === 401 || r.status === 403) {
+          try { localStorage.removeItem('mold-calc-gh-token'); } catch (e) {}
+          $('pub-token-row').hidden = false;
+          throw new Error('토큰이 맞지 않습니다 — 다시 붙여넣고 저장해 주세요');
+        }
+        if (!r.ok) throw new Error('저장소 확인 실패(' + r.status + ')');
+        return r.json();
+      }),
+      fetch('mold.html', { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('페이지 원본을 읽지 못했습니다(' + r.status + ')');
+        return r.text();
+      })
+    ]).then(function (res) {
+      var re = new RegExp('(<script id="site-config"[^>]*>)[\\s\\S]*?(<\\/script>)');
+      if (!re.test(res[1])) throw new Error('설정 블록을 찾지 못했습니다');
+      var next = res[1].replace(re, '$1' + JSON.stringify(configData()) + '$2');
+      return fetch(SITE_API, {
+        method: 'PUT',
+        headers: hdr,
+        body: JSON.stringify({ message: '계산 기준 게시', content: b64utf8(next), sha: res[0].sha, branch: 'main' })
+      });
+    }).then(function (r) {
+      if (!r.ok) throw new Error('게시 실패(' + r.status + ')');
+      pubStatus('게시 완료! 1~2분 안에 모든 휴대폰에 새 기본값이 적용됩니다.');
+    }).catch(function (err) {
+      pubStatus('실패: ' + (err && err.message ? err.message : '알 수 없는 오류'));
+    });
+  }
+
+  var TAB_IDS = ['dry', 'gyp', 'ure', 'silica'];
+  var currentTab = 'dry';
+  function selectTab(name) {
+    if (TAB_IDS.indexOf(name) < 0) name = 'dry';
+    currentTab = name;
+    TAB_IDS.forEach(function (t) {
+      var on = t === name;
+      var btn = $('tab-' + t);
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-selected', String(on));
+      $('pane-' + t).classList.toggle('active', on);
+    });
+    // 혼수율은 건조율·석고 계산에만 쓰이므로 수지·규사 탭에서는 흐리게
+    $('honsu-block').classList.toggle('off', name === 'ure' || name === 'silica');
+    try { localStorage.setItem('mold-calc-tab', name); } catch (e) {}
+  }
+
+  function saveDryInputs() {
+    try {
+      localStorage.setItem('mold-calc-dry-inputs', JSON.stringify({ before: $('dry-before').value, tare: $('dry-tare').value }));
+    } catch (e) {}
+  }
+
+  function enterBlur(e) {
+    if (e && e.key === 'Enter' && e.target && e.target.blur) e.target.blur();
+  }
+
+  function openSettings() {
+    fillSettings();
+    $('settings').hidden = false;
+    document.body.style.overflow = 'hidden';
+    $('settings-close').focus();
+  }
+  function closeSettings() {
+    fillSettings();
+    $('settings').hidden = true;
+    document.body.style.overflow = '';
+    $('settings-open').focus();
+  }
+
+  TAB_IDS.forEach(function (t) {
+    $('tab-' + t).addEventListener('click', function () { selectTab(t); });
+  });
+  [6, 7, 8, 9].forEach(function (n) {
+    $('ure-r' + n).addEventListener('click', function () { setUreRatio(n); });
+  });
+  URE_KEYS.forEach(function (k) {
+    $('ure-t' + k).addEventListener('click', function () { setUreType(k); });
+  });
+  $('unit-kg').addEventListener('click', function () { setWeightUnit('kg'); });
+  $('unit-g').addEventListener('click', function () { setWeightUnit('g'); });
+  $('gyp-mw').addEventListener('click', function () { setGypMode('w'); });
+  $('gyp-mv').addEventListener('click', function () { setGypMode('v'); });
+  $('gyp-mh').addEventListener('click', function () { setGypMode('h'); });
+  $('gyp-hf-gyp').addEventListener('click', function () { setHandFirst('gyp'); });
+  $('gyp-hf-water').addEventListener('click', function () { setHandFirst('water'); });
+  $('ure-im-total').addEventListener('click', function () { setUreImode('total'); });
+  $('ure-im-clay').addEventListener('click', function () { setUreImode('clay'); });
+  $('ure-cs-dry').addEventListener('click', function () { setClayState('dry'); });
+  $('ure-cs-wet').addEventListener('click', function () { setClayState('wet'); });
+
+  $('settings-open').addEventListener('click', openSettings);
+  $('settings-close').addEventListener('click', closeSettings);
+  $('settings').addEventListener('click', function (e) { if (e && e.target === $('settings')) closeSettings(); });
+  $('settings-reset').addEventListener('click', resetRatios);
+  document.addEventListener('keydown', function (e) {
+    if (e && e.key === 'Escape' && !$('settings').hidden) closeSettings();
+  });
+
+  $('site-publish').addEventListener('click', function () {
+    if (typeof location === 'undefined' || location.hostname !== 'parkjkk.github.io') {
+      pubStatus('이 버튼은 사이트 주소(parkjkk.github.io/kook/mold.html)에서 열었을 때만 작동합니다.');
+      return;
+    }
+    var token = '';
+    try { token = localStorage.getItem('mold-calc-gh-token') || ''; } catch (e) {}
+    if (!token) {
+      $('pub-token-row').hidden = false;
+      pubStatus('처음 한 번만: GitHub 토큰을 붙여넣고 [저장]을 누른 뒤 다시 게시를 누르세요. 토큰은 이 기기에만 저장됩니다.');
+      return;
+    }
+    publishConfig(token);
+  });
+  $('pub-token-save').addEventListener('click', function () {
+    var t = $('pub-token').value.trim();
+    if (!t) { pubStatus('토큰을 붙여넣은 뒤 [저장]을 누르세요.'); return; }
+    try { localStorage.setItem('mold-calc-gh-token', t); } catch (e) {}
+    $('pub-token-row').hidden = true;
+    $('pub-token').value = '';
+    pubStatus('토큰 저장 완료 — 이제 [사이트에 게시]를 누르세요.');
+  });
+
+  var SETTING_INPUT_IDS = ['set-silica-base', 'set-silica-a', 'set-silica-b', 'set-gyp-vf', 'set-clay-7845', 'set-clay-3558', 'set-clay-wet'];
+  SET_KEYS.forEach(function (k) { SETTING_INPUT_IDS.push('set-' + k + '-a', 'set-' + k + '-b'); });
+  SETTING_INPUT_IDS.forEach(function (id) {
+    $(id).addEventListener('input', readSettings);
+    $(id).addEventListener('blur', function () { fillSettings(); });
+  });
+
+  ['dry-before', 'dry-after', 'dry-tare', 'gyp-mold', 'gyp-w', 'gyp-d', 'gyp-h', 'gyp-hand', 'ure-total', 'silica-sand'].forEach(function (id) {
+    $(id).addEventListener('input', calcAll);
+    $(id).addEventListener('keydown', enterBlur);
+  });
+  ['dry-before', 'dry-tare'].forEach(function (id) {
+    $(id).addEventListener('input', saveDryInputs);
+  });
+  $('dry-clear').addEventListener('click', function () {
+    $('dry-before').value = '';
+    $('dry-after').value = '';
+    $('dry-tare').value = '';
+    try { localStorage.removeItem('mold-calc-dry-inputs'); } catch (e) {}
+    calcAll();
+  });
+  $('honsu').addEventListener('keydown', enterBlur);
+  $('honsu').addEventListener('input', function () {
+    try { localStorage.setItem('mold-calc-honsu', $('honsu').value); } catch (e) {}
+    calcAll();
+  });
+
+  try {
+    // 사이트에 게시된 공용 기준값을 먼저 '기본값'으로 적용하고, 그 위에 이 기기의 수정값을 덮는다
+    var siteCfgEl = document.getElementById('site-config');
+    if (siteCfgEl) {
+      applyConfigData(JSON.parse(siteCfgEl.textContent || 'null'));
+      SET_KEYS.forEach(function (k) { RESIN_DEFAULTS[k] = [RESINS[k].ra, RESINS[k].rb]; });
+      CLAY_KEYS.forEach(function (k) { CLAY_DEFAULTS[k] = RESINS[k].clay; });
+      SIL_DEFAULT = [SIL.base, SIL.a, SIL.b];
+      GYP_VF_DEFAULT = GYP_VF;
+      CLAY_WET_DEFAULT = CLAY_WET;
+    }
+  } catch (e) {}
+  try {
+    loadRatios();
+    var savedHonsu = localStorage.getItem('mold-calc-honsu');
+    if (savedHonsu !== null && parseNum(savedHonsu) !== null) $('honsu').value = savedHonsu;
+    var savedUnit = localStorage.getItem('mold-calc-unit');
+    if (savedUnit === 'g') setWeightUnit('g');
+    var savedDry = JSON.parse(localStorage.getItem('mold-calc-dry-inputs'));
+    if (savedDry) {
+      if (typeof savedDry.before === 'string') $('dry-before').value = savedDry.before;
+      if (typeof savedDry.tare === 'string') $('dry-tare').value = savedDry.tare;
+    }
+    var savedRatio = parseInt(localStorage.getItem('mold-calc-ure-ratio'), 10);
+    if (savedRatio >= 6 && savedRatio <= 9) setUreRatio(savedRatio);
+    var savedType = localStorage.getItem('mold-calc-ure-type');
+    if (savedType && RESINS[savedType]) setUreType(savedType);
+    var savedTab = localStorage.getItem('mold-calc-tab');
+    if (savedTab) selectTab(savedTab);
+    var savedGypMode = localStorage.getItem('mold-calc-gyp-mode');
+    if (savedGypMode === 'v' || savedGypMode === 'h') setGypMode(savedGypMode);
+    if (localStorage.getItem('mold-calc-hand-first') === 'water') setHandFirst('water');
+    if (localStorage.getItem('mold-calc-ure-imode') === 'clay') setUreImode('clay');
+    if (localStorage.getItem('mold-calc-clay-state') === 'wet') setClayState('wet');
+  } catch (e) {}
+
+  // 저장값 유무와 관계없이 모든 토글의 표시 상태(active·aria)를 한 번 정리
+  setWeightUnit(weightUnit);
+  setGypMode(gypMode);
+  setHandFirst(handFirst);
+  setUreImode(ureImode);
+  setClayState(clayState);
+  setUreType(ureType);
+  selectTab(currentTab);
+  updateSilicaHint();
+  calcAll();
+</script>
