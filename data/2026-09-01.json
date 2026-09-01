@@ -1,25 +1,3 @@
 {
- "rows": [
-  {
-   "id": "f7626e52-e656-4bb2-a104-8d734f326964",
-   "worker": "고영우",
-   "product": "CT768E",
-   "hours": 10,
-   "plan": "",
-   "prod": 6,
-   "scrapKg": "",
-   "defQty": "",
-   "defPart": "",
-   "gasa": "○",
-   "cs": "○",
-   "gap": "○",
-   "inlet": "○",
-   "face": "○",
-   "bubble": "○",
-   "b1": "",
-   "b2": "",
-   "remark": "",
-   "ts": 1788241678682
-  }
- ]
+ "rows": []
 }
